@@ -1,15 +1,16 @@
 package main
 
 import (
-	"coda-schema-generator/dto"
-	"coda-schema-generator/generator"
+	"coda-schema-generator/internal/config"
+	"coda-schema-generator/internal/dto"
+	"coda-schema-generator/internal/generator"
 	"fmt"
 	"io"
 	"os"
 )
 
 func main() {
-	opts, err := parseArgs()
+	opts, err := config.ParseArgs()
 
 	if err != nil {
 		fmt.Println(err)

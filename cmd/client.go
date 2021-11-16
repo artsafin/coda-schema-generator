@@ -1,7 +1,8 @@
 package main
 
 import (
-	"coda-schema-generator/dto"
+	"coda-schema-generator/internal/config"
+	"coda-schema-generator/internal/dto"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,7 +11,7 @@ import (
 )
 
 type client struct {
-	opts APIOptions
+	opts config.APIOptions
 	http *http.Client
 }
 
@@ -20,7 +21,7 @@ func (fn RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) 
 	return fn(req)
 }
 
-func NewClient(options APIOptions) *client {
+func NewClient(options config.APIOptions) *client {
 	return &client{
 		opts: options,
 		http: &http.Client{

@@ -51,8 +51,8 @@ func init() {
 		        Cols: {{typeName .Name "TableColumns"}}{
 		            {{- range $columns.Items }}
 		            {{ fieldName .Name }}: _column {
-                        ID:   "{{ .ID }}",
-                        Name: "{{ .Name }}",
+                                ID:   "{{ .ID }}",
+                                Name: "{{ .Name }}",
 		            },
 		            {{- end}}
 		        },

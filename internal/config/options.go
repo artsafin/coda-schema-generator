@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ type Options struct {
 	DumpOptions
 }
 
-func parseArgs() (Options, error) {
+func ParseArgs() (Options, error) {
 	if len(os.Args) != 3 {
 		return Options{}, fmt.Errorf("usage: %s <CODA API TOKEN> <CODA DOCUMENT ID>", os.Args[0])
 	}

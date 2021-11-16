@@ -1,8 +1,8 @@
 package generator
 
 import (
-	"coda-schema-generator/dto"
-	"coda-schema-generator/templates"
+	"coda-schema-generator/internal/dto"
+	"coda-schema-generator/internal/templates"
 	"io"
 	"text/template"
 )
