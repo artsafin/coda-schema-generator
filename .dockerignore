@@ -1,0 +1,8 @@
+Dockerfile
+Makefile
+.*ignore
+*.md
+.github
+build
+LICENSE
+.idea
