@@ -13,7 +13,7 @@ func main() {
 	opts, err := config.ParseArgs()
 
 	if err != nil {
-		fmt.Println(err)
+		os.Stderr.WriteString(err.Error())
 		os.Exit(1)
 	}
 
