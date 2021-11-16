@@ -1,5 +1,8 @@
 # coda-schema-generator
-Schema generator for coda.io documents
+Schema generator for coda.io documents.
+
+Currently the schema is only a structured way to obtain Coda tables/formulas/controls identifiers.
+This may be useful if you have a huge Coda document with plenty of tables and columns and you need a simpler way to build HTTP queries to obtain these entities.
 
 # Usage
 
