@@ -1,0 +1,65 @@
+package {{ .PackageName }}
+
+// Basic types
+
+type _schema struct {
+	Table   _tableSchema
+	Formula _formulaSchema
+	Control _controlSchema
+}
+
+type _column struct {
+	ID   string
+	Name string
+}
+
+type _tableSchema struct {
+    {{- range .Tables.Items }}
+    {{fieldName .Name}} {{typeName .Name "Table"}} // {{ .Name }}
+    {{- end }}
+}
+type _formulaSchema struct {
+}
+type _controlSchema struct {
+}
+
+{{- range .Tables.Items }}
+
+// Table {{ .Name }}
+type {{typeName .Name "Table"}} struct {
+    ID   string
+    Cols {{typeName .Name "TableColumns"}}
+}
+{{- $columns := index $.Columns .ID }}
+type {{typeName .Name "TableColumns"}} struct {
+    {{- range $columns.Items }}
+	{{ fieldName .Name }} _column // {{ .Name }}
+	{{- end}}
+}
+
+{{- end }}
+
+var ID _schema
+
+func init() {
+	ID = _schema{
+		Table: _tableSchema{
+		    {{- range .Tables.Items }}
+		    {{- $columns := index $.Columns .ID }}
+		    {{ fieldName .Name }}: {{typeName .Name "Table"}}{
+		        ID: "{{ .ID }}",
+		        Cols: {{typeName .Name "TableColumns"}}{
+		            {{- range $columns.Items }}
+		            {{ fieldName .Name }}: _column {
+                        ID:   "{{ .ID }}",
+                        Name: "{{ .Name }}",
+		            },
+		            {{- end}}
+		        },
+		    },
+		    {{- end}}
+		},
+		Formula: _formulaSchema{},
+		Control: _controlSchema{},
+    }
+}
