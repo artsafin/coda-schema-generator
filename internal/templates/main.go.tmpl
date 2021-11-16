@@ -53,13 +53,15 @@ func init() {
 		    {{- range .Tables.Items }}
 		    {{- $columns := index $.Columns .ID }}
 		    {{ fieldName .Name }}: {{typeName .Name "Table"}}{
-		        ID: "{{ .ID }}",
-		        Name: "{{ .Name }}",
+		        _codaEntity: _codaEntity {
+                    ID: "{{ .ID }}",
+                    Name: "{{ .Name }}",
+		        }
 		        Cols: {{typeName .Name "TableColumns"}}{
 		            {{- range $columns.Items }}
 		            {{ fieldName .Name }}: _codaEntity {
-                                ID:   "{{ .ID }}",
-                                Name: "{{ .Name }}",
+                        ID:   "{{ .ID }}",
+                        Name: "{{ .Name }}",
 		            },
 		            {{- end}}
 		        },
@@ -69,17 +71,17 @@ func init() {
 		Formula: _formulaSchema{
 		    {{- range .Formulas.Items }}
 		    {{ fieldName .Name }}: _codaEntity {
-                        ID:   "{{ .ID }}",
-                        Name: "{{ .Name }}",
-                    },
+                ID:   "{{ .ID }}",
+                Name: "{{ .Name }}",
+            },
 		    {{- end }}
 		},
 		Control: _controlSchema{
 		    {{- range .Controls.Items }}
 		    {{ fieldName .Name }}: _codaEntity {
-                        ID:   "{{ .ID }}",
-                        Name: "{{ .Name }}",
-                    },
+                ID:   "{{ .ID }}",
+                Name: "{{ .Name }}",
+            },
 		    {{- end }}
         },
     }
