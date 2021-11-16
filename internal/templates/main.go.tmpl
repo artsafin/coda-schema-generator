@@ -13,6 +13,10 @@ type _codaEntity struct {
 	Name string
 }
 
+func (e *_codaEntity) String() string {
+	return e.ID
+}
+
 type _tableSchema struct {
     {{- range .Tables.Items }}
     {{fieldName .Name}} {{typeName .Name "Table"}} // {{ .Name }}
