@@ -8,7 +8,7 @@ type _schema struct {
 	Control _controlSchema
 }
 
-type _column struct {
+type _codaEntity struct {
 	ID   string
 	Name string
 }
@@ -19,21 +19,27 @@ type _tableSchema struct {
     {{- end }}
 }
 type _formulaSchema struct {
+    {{- range .Formulas.Items }}
+    {{fieldName .Name}} _codaEntity // {{ .Name }}
+    {{- end }}
 }
 type _controlSchema struct {
+    {{- range .Controls.Items }}
+    {{fieldName .Name}} _codaEntity // {{ .Name }}
+    {{- end }}
 }
 
 {{- range .Tables.Items }}
 
 // Table {{ .Name }}
 type {{typeName .Name "Table"}} struct {
-    ID   string
+    _codaEntity
     Cols {{typeName .Name "TableColumns"}}
 }
 {{- $columns := index $.Columns .ID }}
 type {{typeName .Name "TableColumns"}} struct {
     {{- range $columns.Items }}
-	{{ fieldName .Name }} _column // {{ .Name }}
+	{{ fieldName .Name }} _codaEntity // {{ .Name }}
 	{{- end}}
 }
 
@@ -48,9 +54,10 @@ func init() {
 		    {{- $columns := index $.Columns .ID }}
 		    {{ fieldName .Name }}: {{typeName .Name "Table"}}{
 		        ID: "{{ .ID }}",
+		        Name: "{{ .Name }}",
 		        Cols: {{typeName .Name "TableColumns"}}{
 		            {{- range $columns.Items }}
-		            {{ fieldName .Name }}: _column {
+		            {{ fieldName .Name }}: _codaEntity {
                                 ID:   "{{ .ID }}",
                                 Name: "{{ .Name }}",
 		            },
@@ -59,7 +66,21 @@ func init() {
 		    },
 		    {{- end}}
 		},
-		Formula: _formulaSchema{},
-		Control: _controlSchema{},
+		Formula: _formulaSchema{
+		    {{- range .Formulas.Items }}
+		    {{ fieldName .Name }}: _codaEntity {
+                        ID:   "{{ .ID }}",
+                        Name: "{{ .Name }}",
+                    },
+		    {{- end }}
+		},
+		Control: _controlSchema{
+		    {{- range .Controls.Items }}
+		    {{ fieldName .Name }}: _codaEntity {
+                        ID:   "{{ .ID }}",
+                        Name: "{{ .Name }}",
+                    },
+		    {{- end }}
+        },
     }
 }

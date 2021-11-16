@@ -1,8 +1,7 @@
-package main
+package api
 
 import (
 	"coda-schema-generator/internal/config"
-	"coda-schema-generator/internal/dto"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -40,30 +39,42 @@ func (c *client) endpointf(endpoint string, params ...interface{}) string {
 	return fmt.Sprintf("%s/%s", c.opts.Endpoint, fmt.Sprintf(endpoint, params...))
 }
 
-func (c *client) loadTables() (dto.Tables, error) {
+func (c *client) loadEntities(entityType string) (EntityList, error) {
 	var err error
 
-	resp, err := c.http.Get(c.endpointf("docs/%s/tables", c.opts.DocID))
+	resp, err := c.http.Get(c.endpointf("docs/%s/%s", c.opts.DocID, entityType))
 	if err != nil {
-		return dto.Tables{}, err
+		return EntityList{}, err
 	}
 	defer resp.Body.Close()
 
 	dec := json.NewDecoder(resp.Body)
 
-	tableItems := dto.Tables{}
-	err = dec.Decode(&tableItems)
+	items := EntityList{}
+	err = dec.Decode(&items)
 	if err != nil {
-		return dto.Tables{}, err
+		return EntityList{}, err
 	}
 
-	return tableItems, nil
+	return items, nil
 }
 
-func (c *client) loadColumns(tables dto.Tables) (map[string]dto.TableColumns, error) {
+func (c *client) LoadTables() (EntityList, error) {
+	return c.loadEntities("tables")
+}
+
+func (c *client) LoadFormulas() (EntityList, error) {
+	return c.loadEntities("formulas")
+}
+
+func (c *client) LoadControls() (EntityList, error) {
+	return c.loadEntities("controls")
+}
+
+func (c *client) LoadColumns(tables EntityList) (map[string]TableColumns, error) {
 	var wg sync.WaitGroup
 
-	out := make(chan dto.TableColumns)
+	out := make(chan TableColumns)
 
 	wg.Add(len(tables.Items))
 
@@ -79,7 +90,7 @@ func (c *client) loadColumns(tables dto.Tables) (map[string]dto.TableColumns, er
 
 			dec := json.NewDecoder(resp.Body)
 
-			columns := dto.TableColumns{
+			columns := TableColumns{
 				TableID: tableID,
 			}
 			err = dec.Decode(&columns)
@@ -98,7 +109,7 @@ func (c *client) loadColumns(tables dto.Tables) (map[string]dto.TableColumns, er
 		close(out)
 	}()
 
-	cols := make(map[string]dto.TableColumns)
+	cols := make(map[string]TableColumns)
 
 	for v := range out {
 		cols[v.TableID] = v

@@ -1,6 +1,6 @@
-package dto
+package api
 
-type Tables struct {
+type EntityList struct {
 	Items []struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`

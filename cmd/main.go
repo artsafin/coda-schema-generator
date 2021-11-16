@@ -1,8 +1,8 @@
 package main
 
 import (
+	"coda-schema-generator/internal/api"
 	"coda-schema-generator/internal/config"
-	"coda-schema-generator/internal/dto"
 	"coda-schema-generator/internal/generator"
 	"fmt"
 	"io"
@@ -18,15 +18,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	coda := NewClient(opts.APIOptions)
+	coda := api.NewClient(opts.APIOptions)
 
-	var tables dto.Tables
-	if tables, err = coda.loadTables(); err != nil {
+	var tables api.EntityList
+	if tables, err = coda.LoadTables(); err != nil {
 		panic(err)
 	}
 
-	var columns map[string]dto.TableColumns
-	if columns, err = coda.loadColumns(tables); err != nil {
+	var formulas api.EntityList
+	if formulas, err = coda.LoadFormulas(); err != nil {
+		panic(err)
+	}
+
+	var controls api.EntityList
+	if controls, err = coda.LoadControls(); err != nil {
+		panic(err)
+	}
+
+	var columns map[string]api.TableColumns
+	if columns, err = coda.LoadColumns(tables); err != nil {
 		panic(err)
 	}
 
@@ -39,7 +49,7 @@ func main() {
 		}
 	}
 
-	gen := generator.NewGenerator(opts.PackageName, tables, columns)
+	gen := generator.NewGenerator(opts.PackageName, tables, columns, formulas, controls)
 	err = gen.Generate(outputWriter)
 
 	if err != nil {
