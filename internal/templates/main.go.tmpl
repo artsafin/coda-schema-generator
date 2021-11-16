@@ -56,7 +56,7 @@ func init() {
 		        _codaEntity: _codaEntity {
                     ID: "{{ .ID }}",
                     Name: "{{ .Name }}",
-		        }
+		        },
 		        Cols: {{typeName .Name "TableColumns"}}{
 		            {{- range $columns.Items }}
 		            {{ fieldName .Name }}: _codaEntity {
