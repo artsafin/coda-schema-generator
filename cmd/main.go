@@ -14,6 +14,7 @@ func main() {
 
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
+		os.Stderr.WriteString("\n")
 		os.Exit(1)
 	}
 
