@@ -33,7 +33,7 @@ Example of generated file:
 ...
 ```
 
-# Usage
+# Usage for users
 
 ## Generate schema for your Coda document
 ```
@@ -42,8 +42,8 @@ docker run --rm ghcr.io/artsafin/coda-schema-generator/coda-schema-generator:mai
 
 where:
 
-`$CODA_TOKEN` is an API token for Coda
-`$CODA_DOCUMENT` is Coda document ID
+- `$CODA_TOKEN` is an API token for Coda
+- `$CODA_DOCUMENT` is Coda document ID (`XXXXXXXXXX` part in the `https://coda.io/d/YOURHUMANDOCNAME_dXXXXXXXXXX` url)
 
 ## Use in your code
 
@@ -56,4 +56,18 @@ params := coda.ListRowsParameters{
     Query: fmt.Sprintf("\"%s\":\"%s\"", codaschema.ID.Table.Users.Cols.LastName, lastName),
 }
 resp, err := coda.ListTableRows(codaDocumentId, codaschema.ID.Table.Users.ID, params)
+```
+
+# Usage for developers
+
+Build it:
+
+```
+make
+```
+
+Run it:
+
+```
+./build/csg $CODA_TOKEN $CODA_DOCUMENT > internal/codaschema/ids.go
 ```

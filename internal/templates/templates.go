@@ -4,5 +4,5 @@ import (
 	"embed"
 )
 
-//go:embed *.tmpl
+//go:embed *.tmpl types
 var FS embed.FS

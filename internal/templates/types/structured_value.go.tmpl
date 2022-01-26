@@ -1,0 +1,60 @@
+
+type StructuredValue struct {
+	Context        string `json:"@context"`
+	Type           string `json:"@type"`
+	AdditionalType string `json:"additionalType"`
+	Name           string `json:"name"`
+	Url            string `json:"url"`
+	TableId        string `json:"tableId"`
+	RowId          string `json:"rowId"`
+	TableUrl       string `json:"tableUrl"`
+}
+
+func ToStructuredValue(colID string, row Valuer) (sv StructuredValue, err error) {
+	var ok bool
+
+	rawv, ok := row.GetValue(colID)
+
+	if !ok {
+		return sv, errors.New("column missing")
+	}
+	var mapv map[string]interface{}
+
+	if mapv, ok = rawv.(map[string]interface{}); !ok {
+		return sv, fmt.Errorf("column %v is not map", colID)
+	}
+
+	if sv.Context, ok = mapv["@context"].(string); !ok {
+		return sv, errors.New("@context is not set")
+	}
+
+	if sv.Type, ok = mapv["@type"].(string); !ok {
+		return sv, errors.New("@type is not set")
+	}
+
+	if sv.AdditionalType, ok = mapv["additionalType"].(string); !ok {
+		return sv, errors.New("additionalType is not set")
+	}
+
+	if sv.Name, ok = mapv["name"].(string); !ok {
+		return sv, errors.New("name is not set")
+	}
+
+	if sv.Url, ok = mapv["url"].(string); !ok {
+		return sv, errors.New("url is not set")
+	}
+
+	if sv.TableId, ok = mapv["tableId"].(string); !ok {
+		return sv, errors.New("tableId is not set")
+	}
+
+	if sv.RowId, ok = mapv["rowId"].(string); !ok {
+		return sv, errors.New("rowId is not set")
+	}
+
+	if sv.TableUrl, ok = mapv["tableUrl"].(string); !ok {
+		return sv, errors.New("tableUrl is not set")
+	}
+
+	return
+}

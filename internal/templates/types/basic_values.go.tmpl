@@ -1,0 +1,73 @@
+
+func ToString(colID string, row Valuer) (string, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return "", nil
+	}
+	if value, ok := rawv.(string); ok {
+		return strings.Trim(value, "`"), nil
+	}
+
+	return "", newFieldError(colID, "string", rawv)
+}
+
+func ToDate(colID string, row Valuer) (time.Time, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return time.Time{}, nil
+	}
+	if value, ok := rawv.(string); ok {
+		if value == "" {
+			return time.Time{}, nil
+		}
+		if timev, err := time.Parse(time.RFC3339, value); err == nil {
+			return timev, nil
+		}
+	}
+
+	return time.Time{}, newFieldError(colID, "RFC3339 date", rawv)
+}
+
+func ToFloat64(colID string, row Valuer) (float64, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return 0, nil
+	}
+	switch v := rawv.(type) {
+	case float64:
+		return v, nil
+	case int64:
+		return float64(v), nil
+	case int32:
+		return float64(v), nil
+	case float32:
+		return float64(v), nil
+	case string:
+		return strconv.ParseFloat(v, 64)
+	default:
+		return 0, newFieldError(colID, "float64", rawv)
+	}
+}
+
+func ToBool(colID string, row Valuer) (bool, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return false, nil
+	}
+	switch v := rawv.(type) {
+	case bool:
+		return v, nil
+	case string:
+		return false, nil
+	default:
+		return false, newFieldError(colID, "bool", rawv)
+	}
+}
+
+func ToUint16(colID string, row Valuer) (uint16, error) {
+	if v, err := ToFloat64(colID, row); err == nil {
+		return uint16(v), nil
+	}
+	rawv, _ := row.GetValue(colID)
+	return 0, newFieldError(colID, "uint16", rawv)
+}

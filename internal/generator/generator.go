@@ -8,7 +8,7 @@ import (
 )
 
 type generator struct {
-	Tables      api.EntityList
+	Tables      api.TableList
 	Formulas    api.EntityList
 	Controls    api.EntityList
 	Columns     map[string]api.TableColumns
@@ -18,7 +18,7 @@ type generator struct {
 
 func NewGenerator(
 	packageName string,
-	tables api.EntityList,
+	tables api.TableList,
 	columns map[string]api.TableColumns,
 	formulas api.EntityList,
 	controls api.EntityList,
@@ -34,18 +34,32 @@ func NewGenerator(
 }
 
 func (d *generator) Generate(w io.Writer) error {
-	tpl := template.New("top").
+	tpl := template.New("main.go.tmpl").
 		Funcs(template.FuncMap{
 			"fieldName": d.name.ConvertNameToGoSymbol,
 			"typeName":  d.name.ConvertNameToGoType,
 		})
 
-	tpl, err := tpl.ParseFS(templates.FS, "*.tmpl")
+	tpl, err := tpl.ParseFS(templates.FS, "*.tmpl", "types/*.tmpl")
 	if err != nil {
 		return err
 	}
 
 	err = tpl.ExecuteTemplate(w, "main.go.tmpl", d)
+
+	dirs, err := templates.FS.ReadDir("types")
+	if err != nil {
+		return err
+	}
+	for _, typeFile := range dirs {
+		if typeFile.IsDir() {
+			continue
+		}
+		err = tpl.ExecuteTemplate(w, typeFile.Name(), d)
+		if err != nil {
+			return err
+		}
+	}
 
 	if err != nil {
 		return err

@@ -1,6 +1,14 @@
 package {{ .PackageName }}
 
-// Basic types
+import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+)
+
+//region Basic types
 
 type _schema struct {
 	Table   _tableSchema
@@ -43,50 +51,63 @@ type {{typeName .Name "Table"}} struct {
 {{- $columns := index $.Columns .ID }}
 type {{typeName .Name "TableColumns"}} struct {
     {{- range $columns.Items }}
-	{{ fieldName .Name }} _codaEntity // {{ .Name }}
+	{{ fieldName .Name }} _codaEntity /* {{ .Format.Type }} [{{ .Name }}]{{ if .Formula }} = {{ .Formula }}{{ end }} */
 	{{- end}}
 }
 
 {{- end }}
 
-var ID _schema
+//endregion
 
-func init() {
-	ID = _schema{
-		Table: _tableSchema{
-		    {{- range .Tables.Items }}
-		    {{- $columns := index $.Columns .ID }}
-		    {{ fieldName .Name }}: {{typeName .Name "Table"}}{
-		        _codaEntity: _codaEntity {
-                    ID: "{{ .ID }}",
-                    Name: "{{ .Name }}",
-		        },
-		        Cols: {{typeName .Name "TableColumns"}}{
-		            {{- range $columns.Items }}
-		            {{ fieldName .Name }}: _codaEntity {
-                        ID:   "{{ .ID }}",
-                        Name: "{{ .Name }}",
-		            },
-		            {{- end}}
-		        },
-		    },
-		    {{- end}}
-		},
-		Formula: _formulaSchema{
-		    {{- range .Formulas.Items }}
-		    {{ fieldName .Name }}: _codaEntity {
-                ID:   "{{ .ID }}",
-                Name: "{{ .Name }}",
+//region Mutable table references enumerations
+
+{{ range .Tables.Items }}
+{{- $columns := index $.Columns .ID }}
+{{- if $columns.HasMutableRefColumns }}
+type {{fieldName .Name }}Refs struct {
+    {{- range $columns.GetMutableRefColumns }}
+    {{ fieldName .Name }} bool
+    {{- end}}
+}
+{{- end }}
+{{- end }}
+
+//endregion
+
+var ID = _schema{
+    Table: _tableSchema{
+        {{- range .Tables.Items }}
+        {{- $columns := index $.Columns .ID }}
+        {{ fieldName .Name }}: {{typeName .Name "Table"}}{
+            _codaEntity: _codaEntity {
+                   ID: `{{ .ID }}`,
+                   Name: `{{ .Name }}`,
             },
-		    {{- end }}
-		},
-		Control: _controlSchema{
-		    {{- range .Controls.Items }}
-		    {{ fieldName .Name }}: _codaEntity {
-                ID:   "{{ .ID }}",
-                Name: "{{ .Name }}",
+            Cols: {{typeName .Name "TableColumns"}}{
+                {{- range $columns.Items }}
+                {{ fieldName .Name }}: _codaEntity {
+                       ID:   `{{ .ID }}`,
+                       Name: `{{ .Name }}`,
+                },
+                {{- end}}
             },
-		    {{- end }}
         },
-    }
+        {{- end}}
+    },
+    Formula: _formulaSchema{
+        {{- range .Formulas.Items }}
+        {{ fieldName .Name }}: _codaEntity {
+               ID:   `{{ .ID }}`,
+               Name: `{{ .Name }}`,
+           },
+        {{- end }}
+    },
+    Control: _controlSchema{
+        {{- range .Controls.Items }}
+        {{ fieldName .Name }}: _codaEntity {
+               ID:   `{{ .ID }}`,
+               Name: `{{ .Name }}`,
+           },
+        {{- end }}
+       },
 }
