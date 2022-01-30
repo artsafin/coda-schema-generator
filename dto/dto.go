@@ -1,4 +1,4 @@
-package api
+package dto
 
 type ItemsContainer interface {
 	Count() int

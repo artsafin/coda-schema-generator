@@ -1,6 +1,8 @@
 package generator
 
-import "github.com/artsafin/coda-schema-generator/internal/api"
+import (
+	"github.com/artsafin/coda-schema-generator/dto"
+)
 
 const (
 	lookupTypeSuffix    = "Lookup"
@@ -38,7 +40,7 @@ func (m *FieldMapper) GetLookupFields() (r []LookupField) {
 	return
 }
 
-func (m *FieldMapper) registerField(tableID string, c api.Column) {
+func (m *FieldMapper) registerField(tableID string, c dto.Column) {
 	typeData := mapColumnFormatToGoType(m.namer, c)
 
 	m.Fields[tableID] = append(m.Fields[tableID], Field{
@@ -47,12 +49,12 @@ func (m *FieldMapper) registerField(tableID string, c api.Column) {
 		ConvertFn: typeData.ValuerFn,
 	})
 
-	if c.Format.Type == api.ColumnFormatTypeLookup {
+	if c.Format.Type == dto.ColumnFormatTypeLookup {
 		m.registerLookup(c)
 	}
 }
 
-func (m *FieldMapper) registerLookup(c api.Column) {
+func (m *FieldMapper) registerLookup(c dto.Column) {
 	if _, ok := m.lookupFields[c.Format.Table.ID]; ok {
 		return
 	}
@@ -71,31 +73,31 @@ type ColumnTypeData struct {
 	ValuerFn    string
 }
 
-func mapColumnFormatToGoType(namer nameConverter, c api.Column) ColumnTypeData {
+func mapColumnFormatToGoType(namer nameConverter, c dto.Column) ColumnTypeData {
 	switch c.Format.Type {
-	case api.ColumnFormatTypeDateTime:
+	case dto.ColumnFormatTypeDateTime:
 		return ColumnTypeData{LiteralType: "time.Time", ValuerFn: "ToDateTime"}
-	case api.ColumnFormatTypeTime:
+	case dto.ColumnFormatTypeTime:
 		return ColumnTypeData{LiteralType: "time.Time", ValuerFn: "ToTime"}
-	case api.ColumnFormatTypeDate:
+	case dto.ColumnFormatTypeDate:
 		return ColumnTypeData{LiteralType: "time.Time", ValuerFn: "ToDate"}
-	case api.ColumnFormatTypeScale:
+	case dto.ColumnFormatTypeScale:
 		return ColumnTypeData{LiteralType: "uint8", ValuerFn: "ToUint8"}
-	case api.ColumnFormatTypeNumber, api.ColumnFormatTypeSlider:
+	case dto.ColumnFormatTypeNumber, dto.ColumnFormatTypeSlider:
 		return ColumnTypeData{LiteralType: "float64", ValuerFn: "ToFloat64"}
-	case api.ColumnFormatTypeCheckbox:
+	case dto.ColumnFormatTypeCheckbox:
 		return ColumnTypeData{LiteralType: "bool", ValuerFn: "ToBool"}
-	case api.ColumnFormatTypeLookup:
+	case dto.ColumnFormatTypeLookup:
 		t := namer.ConvertNameToGoSymbol(c.Format.Table.Name) + lookupTypeSuffix
 		return ColumnTypeData{
 			LiteralType: t,
 			ValuerFn:    "To" + t,
 		}
-	case api.ColumnFormatTypePerson, api.ColumnFormatTypeReaction:
+	case dto.ColumnFormatTypePerson, dto.ColumnFormatTypeReaction:
 		return ColumnTypeData{LiteralType: "[]Person", ValuerFn: "ToPersons"}
-	case api.ColumnFormatTypeImage, api.ColumnFormatTypeAttachments:
+	case dto.ColumnFormatTypeImage, dto.ColumnFormatTypeAttachments:
 		return ColumnTypeData{LiteralType: "[]Attachment", ValuerFn: "ToAttachments"}
-	case api.ColumnFormatTypeCurrency:
+	case dto.ColumnFormatTypeCurrency:
 		return ColumnTypeData{LiteralType: "MonetaryAmount", ValuerFn: "ToMonetaryAmount"}
 	}
 

@@ -1,17 +1,17 @@
 package generator
 
 import (
-	"github.com/artsafin/coda-schema-generator/internal/api"
+	"github.com/artsafin/coda-schema-generator/dto"
 	"github.com/artsafin/coda-schema-generator/internal/templates"
 	"io"
 	"text/template"
 )
 
 type generator struct {
-	Tables      api.TableList
-	Formulas    api.EntityList
-	Controls    api.EntityList
-	Columns     map[string]api.TableColumns
+	Tables      dto.TableList
+	Formulas    dto.EntityList
+	Controls    dto.EntityList
+	Columns     map[string]dto.TableColumns
 	DTO         *FieldMapper
 	PackageName string
 	name        nameConverter
@@ -19,10 +19,10 @@ type generator struct {
 
 func NewGenerator(
 	packageName string,
-	tables api.TableList,
-	columns map[string]api.TableColumns,
-	formulas api.EntityList,
-	controls api.EntityList,
+	tables dto.TableList,
+	columns map[string]dto.TableColumns,
+	formulas dto.EntityList,
+	controls dto.EntityList,
 ) generator {
 	nc := NewNameConverter()
 	fm := NewFieldMapper(nc)

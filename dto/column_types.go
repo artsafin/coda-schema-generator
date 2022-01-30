@@ -1,4 +1,4 @@
-package api
+package dto
 
 const (
 	ColumnFormatTypeAttachments string = "attachments"

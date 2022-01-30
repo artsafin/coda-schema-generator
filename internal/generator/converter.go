@@ -11,8 +11,8 @@ type nameConverter struct {
 	pascalCaseRe       *regexp.Regexp
 }
 
-// Taken from https://gist.github.com/elliotchance/d419395aa776d632d897
-func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
+// replaceAllStringSubmatchFunc taken from https://gist.github.com/elliotchance/d419395aa776d632d897
+func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""
 	lastIndex := 0
 
@@ -55,7 +55,7 @@ func NewNameConverter() nameConverter {
 }
 
 func (d *nameConverter) ConvertNameToGoSymbol(name string) string {
-	name = ReplaceAllStringSubmatchFunc(d.pascalCaseRe, name, func(g []string) string {
+	name = replaceAllStringSubmatchFunc(d.pascalCaseRe, name, func(g []string) string {
 		return g[1] + strings.ToUpper(g[2])
 	})
 
