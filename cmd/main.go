@@ -1,10 +1,10 @@
 package main
 
 import (
-	"coda-schema-generator/internal/api"
-	"coda-schema-generator/internal/config"
-	"coda-schema-generator/internal/generator"
 	"fmt"
+	"github.com/artsafin/coda-schema-generator/internal/api"
+	"github.com/artsafin/coda-schema-generator/internal/config"
+	"github.com/artsafin/coda-schema-generator/internal/generator"
 	"io"
 	"os"
 )

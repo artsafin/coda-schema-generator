@@ -1,8 +1,8 @@
 package generator
 
 import (
-	"coda-schema-generator/internal/api"
-	"coda-schema-generator/internal/templates"
+	"github.com/artsafin/coda-schema-generator/internal/api"
+	"github.com/artsafin/coda-schema-generator/internal/templates"
 	"io"
 	"text/template"
 )
@@ -12,6 +12,7 @@ type generator struct {
 	Formulas    api.EntityList
 	Controls    api.EntityList
 	Columns     map[string]api.TableColumns
+	DTO         *FieldMapper
 	PackageName string
 	name        nameConverter
 }
@@ -23,13 +24,23 @@ func NewGenerator(
 	formulas api.EntityList,
 	controls api.EntityList,
 ) generator {
+	nc := NewNameConverter()
+	fm := NewFieldMapper(nc)
+
+	for _, t := range tables.Items {
+		for _, c := range columns[t.ID].Items {
+			fm.registerField(t.ID, c)
+		}
+	}
+
 	return generator{
 		PackageName: packageName,
 		Tables:      tables,
 		Columns:     columns,
+		DTO:         fm,
 		Formulas:    formulas,
 		Controls:    controls,
-		name:        NewNameConverter(),
+		name:        nc,
 	}
 }
 
@@ -46,6 +57,9 @@ func (d *generator) Generate(w io.Writer) error {
 	}
 
 	err = tpl.ExecuteTemplate(w, "main.go.tmpl", d)
+	if err != nil {
+		return err
+	}
 
 	dirs, err := templates.FS.ReadDir("types")
 	if err != nil {
@@ -61,6 +75,7 @@ func (d *generator) Generate(w io.Writer) error {
 		}
 	}
 
+	err = tpl.ExecuteTemplate(w, "dto.go.tmpl", d)
 	if err != nil {
 		return err
 	}

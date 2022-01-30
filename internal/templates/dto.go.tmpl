@@ -1,0 +1,90 @@
+
+//region Data structs
+
+{{ range .Tables.Items }}
+{{- $table := . }}
+{{- $fields := index $.DTO.Fields .ID }}
+
+// {{ fieldName $table.Name }} is DTO for {{ $table.Name }} table
+type {{ fieldName $table.Name }} struct {
+    {{- range $fields }}
+    {{ .Name }} {{ .Type }}
+    {{- end }}
+}
+
+func New{{ fieldName $table.Name }}(row Valuer) (dto {{ fieldName $table.Name }}, errs error) {
+	var err error
+	errc := NewErrorContainer()
+
+    {{- range $fields }}
+    if dto.{{ .Name }}, err = {{ .ConvertFn }}(ID.Table.{{ fieldName $table.Name }}.Cols.{{ .Name }}.ID, row); err != nil {
+        errc.AddError(fmt.Errorf("field [%v] %v: %w", ID.Table.{{ fieldName $table.Name }}.Cols.{{ .Name }}.Name, ID.Table.{{ fieldName $table.Name }}.Cols.{{ .Name }}.ID, err))
+    }
+    {{- end }}
+
+    if len(errc) > 0 {
+        return {{ fieldName $table.Name }}{}, errc
+    }
+
+	return
+}
+
+{{- end }}
+
+{{- range $.DTO.GetLookupFields }}
+type {{ .LookupValuesType }} struct {
+    Values []{{ .LookupRowRefType }}
+}
+func (l *{{ .LookupValuesType }}) First() (first {{ .LookupRowRefType }}, found bool) {
+	if len(l.Values) > 0 {
+		return l.Values[0], true
+	}
+
+	return {{ .LookupRowRefType }}{}, false
+}
+
+type {{ .LookupRowRefType }} struct {
+    Name  string
+    RowID string
+    Data  *{{ .DTOType }}
+}
+
+func To{{ .LookupValuesType }}(colID string, row Valuer) (values {{ .LookupValuesType }}, err error) {
+    rawv, ok := row.GetValue(colID)
+	if !ok {
+		return {{ .LookupValuesType }}{}, nil
+	}
+
+	if slicev, ok := rawv.([]interface{}); ok {
+		for i, interv := range slicev {
+			sv, err := toStructuredValue(interv)
+			if err != nil {
+				return {{ .LookupValuesType }}{}, fmt.Errorf("slice value #%v: %w", i, err)
+			}
+			values.Values = append(values.Values, {{ .LookupRowRefType }}{
+				Name:  sv.Name,
+				RowID: sv.RowId,
+			})
+		}
+
+		return
+	}
+
+	sv, err := toStructuredValue(rawv)
+	if err != nil {
+		return {{ .LookupValuesType }}{}, err
+	}
+
+	values.Values = []{{ .LookupRowRefType }}{
+	    {
+            Name:  sv.Name,
+            RowID: sv.RowId,
+	    },
+	}
+
+	return
+}
+
+{{- end }}
+
+//endregion

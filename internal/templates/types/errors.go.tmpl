@@ -1,7 +1,10 @@
 
+
+//region Errors
+
 func newFieldError(fieldID string, expectedType string, rawv interface{}) error {
 	return fmt.Errorf(
-		"unexpected type for field %s. Expected type %s, got %T (value %#v)",
+		"unexpected type for field %s. Expected type %s, got %T (value `%#v`)",
 		fieldID,
 		expectedType,
 		rawv,
@@ -14,9 +17,10 @@ type ErrContainer []error
 func (c *ErrContainer) AddError(err error) {
 	*c = append(*c, err)
 }
-func (c *ErrContainer) String() string {
+
+func (c ErrContainer) Error() string {
 	stringErr := ""
-	for _, err := range *c {
+	for _, err := range c {
 		stringErr += err.Error() + "; "
 	}
 
@@ -24,5 +28,7 @@ func (c *ErrContainer) String() string {
 }
 
 func NewErrorContainer() ErrContainer {
-	return make([]error, 0)
+	return make(ErrContainer, 0)
 }
+
+//endregion

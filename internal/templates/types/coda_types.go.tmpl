@@ -1,0 +1,33 @@
+
+
+//region Coda types
+
+type Person struct {
+    Name string
+    Email string
+}
+
+type MonetaryAmount struct {
+    Currency string
+    Amount   float64
+}
+
+type Attachment struct {
+    Name   string
+    Height int
+    Width  int
+    URL    string
+}
+
+type structuredValue struct {
+	Context        string `json:"@context"`
+	Type           string `json:"@type"`
+	AdditionalType string `json:"additionalType"`
+	Name           string `json:"name"`
+	Url            string `json:"url"`
+	TableId        string `json:"tableId"`
+	RowId          string `json:"rowId"`
+	TableUrl       string `json:"tableUrl"`
+}
+
+//endregion

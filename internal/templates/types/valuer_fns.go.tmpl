@@ -1,0 +1,292 @@
+
+
+//region Basic types parsing
+
+func ToString(colID string, row Valuer) (string, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return "", nil
+	}
+	if value, ok := rawv.(string); ok {
+		return strings.Trim(value, "`"), nil
+	}
+
+	return "", newFieldError(colID, "string", rawv)
+}
+
+func ToDateTime(colID string, row Valuer) (time.Time, error) {
+    return ToTimeWithFormat(time.RFC3339, colID, row)
+}
+
+func ToDate(colID string, row Valuer) (time.Time, error) {
+    return ToTimeWithFormat("2006-01-02", colID, row)
+}
+
+func ToTime(colID string, row Valuer) (time.Time, error) {
+    return ToTimeWithFormat("15:04:05", colID, row)
+}
+
+func ToTimeWithFormat(format string, colID string, row Valuer) (time.Time, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return time.Time{}, nil
+	}
+	if value, ok := rawv.(string); ok {
+		if value == "" {
+			return time.Time{}, nil
+		}
+		if timev, err := time.Parse(format, value); err == nil {
+			return timev, nil
+		}
+	}
+
+	return time.Time{}, newFieldError(colID, "RFC3339 date", rawv)
+}
+
+func ToFloat64(colID string, row Valuer) (float64, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return 0, nil
+	}
+	switch v := rawv.(type) {
+	case float64:
+		return v, nil
+	case int64:
+		return float64(v), nil
+	case int32:
+		return float64(v), nil
+	case float32:
+		return float64(v), nil
+	case string:
+		return strconv.ParseFloat(v, 64)
+	default:
+		return 0, newFieldError(colID, "float64", rawv)
+	}
+}
+
+func ToBool(colID string, row Valuer) (bool, error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return false, nil
+	}
+	switch v := rawv.(type) {
+	case bool:
+		return v, nil
+	case string:
+		return false, nil
+	default:
+		return false, newFieldError(colID, "bool", rawv)
+	}
+}
+
+func ToUint8(colID string, row Valuer) (uint8, error) {
+	if v, err := ToFloat64(colID, row); err == nil {
+		return uint8(v), nil
+	}
+	rawv, _ := row.GetValue(colID)
+	return 0, newFieldError(colID, "uint8", rawv)
+}
+
+func toStructuredValue(rawv interface{}) (sv structuredValue, err error) {
+	var ok bool
+	var mapv map[string]interface{}
+
+	if mapv, ok = rawv.(map[string]interface{}); !ok {
+		return sv, fmt.Errorf("unexpected value type %T", rawv)
+	}
+
+	if sv.Context, ok = mapv["@context"].(string); !ok {
+		return sv, fmt.Errorf("@context is not set")
+	}
+
+	if sv.Type, ok = mapv["@type"].(string); !ok {
+		return sv, fmt.Errorf("@type is not set")
+	}
+
+	if sv.AdditionalType, ok = mapv["additionalType"].(string); !ok {
+		return sv, fmt.Errorf("additionalType is not set")
+	}
+
+	if sv.Name, ok = mapv["name"].(string); !ok {
+		return sv, fmt.Errorf("name is not set")
+	}
+
+	if sv.Url, ok = mapv["url"].(string); !ok {
+		return sv, fmt.Errorf("url is not set")
+	}
+
+	if sv.TableId, ok = mapv["tableId"].(string); !ok {
+		return sv, fmt.Errorf("tableId is not set")
+	}
+
+	if sv.RowId, ok = mapv["rowId"].(string); !ok {
+		return sv, fmt.Errorf("rowId is not set")
+	}
+
+	if sv.TableUrl, ok = mapv["tableUrl"].(string); !ok {
+		return sv, fmt.Errorf("tableUrl is not set")
+	}
+
+	return
+}
+
+//ToPersons parses Valuer value(s) of the following structure:
+//{
+//  "@context": "http://schema.org/",
+//  "@type": "Person",
+//  "name": "John Doe",
+//  "email": "john.doe@example.org"
+//},
+func ToPersons(colID string, row Valuer) (persons []Person, err error) {
+	v, ok := row.GetValue(colID)
+	if !ok {
+		return nil, nil
+	}
+
+	if sliceVal, ok := v.([]interface{}); ok {
+		for sliceIdx, interVal := range sliceVal {
+			var mapVal map[string]interface{}
+			if mapVal, ok = interVal.(map[string]interface{}); !ok {
+				return nil, fmt.Errorf("slice value #%v: unexpected item type %T (value %#v)", sliceIdx, mapVal, mapVal)
+			}
+			person, err := newPersonFromInterface(mapVal)
+			if err != nil {
+				return nil, fmt.Errorf("slice value #%v: %w", sliceIdx, err)
+			}
+			persons = append(persons, person)
+		}
+
+		return
+	}
+
+	if mapVal, ok := v.(map[string]interface{}); ok {
+		person, err := newPersonFromInterface(mapVal)
+		if err != nil {
+			return nil, err
+		}
+		return []Person{person}, nil
+	}
+
+	return nil, fmt.Errorf("unexpected value type %T (value %#v)", v, v)
+}
+
+//ToAttachments parses Valuer value(s) of the following structure:
+// {
+//   "@context": "http://schema.org/",
+//   "@type": "ImageObject",
+//   "name": "....pdf",
+//   "height": "",
+//   "width": "",
+//   "url": "https://codahosted.io/docs/...",
+//   "status": "live"
+// }
+//
+// {
+//   "@context": "http://schema.org/",
+//   "@type": "ImageObject",
+//   "name": "....jpg",
+//   "height": 4032,
+//   "width": 3024,
+//   "url": "https://codahosted.io/docs/...",
+//   "status": "live"
+// }
+func ToAttachments(colID string, row Valuer) (atts []Attachment, err error) {
+	v, ok := row.GetValue(colID)
+	if !ok {
+		return nil, nil
+	}
+
+	if sliceVal, ok := v.([]interface{}); ok {
+		for sliceIdx, interVal := range sliceVal {
+			var mapVal map[string]interface{}
+			if mapVal, ok = interVal.(map[string]interface{}); !ok {
+				return nil, fmt.Errorf("slice value #%v: unexpected item type %T (value %#v)", sliceIdx, mapVal, mapVal)
+			}
+			att, err := newAttachmentFromInterface(mapVal)
+			if err != nil {
+				return nil, fmt.Errorf("slice value #%v: %w", sliceIdx, err)
+			}
+			atts = append(atts, att)
+		}
+
+		return
+	}
+
+	if mapVal, ok := v.(map[string]interface{}); ok {
+		att, err := newAttachmentFromInterface(mapVal)
+		if err != nil {
+			return nil, err
+		}
+		return []Attachment{att}, nil
+	}
+
+	return nil, fmt.Errorf("unexpected value type %T (value %#v)", v, v)
+}
+
+//ToMonetaryAmount parses Valuer value(s) of the following structure:
+//{
+//	"@context": "http://schema.org/",
+//	"@type": "MonetaryAmount",
+//	"currency": "JPY",
+//	"amount": 543
+//},
+func ToMonetaryAmount(colID string, row Valuer) (money MonetaryAmount, err error) {
+	v, ok := row.GetValue(colID)
+	if !ok {
+		return MonetaryAmount{}, nil
+	}
+
+	if mapVal, ok := v.(map[string]interface{}); ok {
+		return newMoneyFromInterface(mapVal)
+	}
+
+	return MonetaryAmount{}, fmt.Errorf("unexpected value type %T (value %#v)", v, v)
+}
+
+func newPersonFromInterface(value map[string]interface{}) (Person, error) {
+	valueType, _ := value["@type"].(string)
+
+	if valueType != "Person" {
+		return Person{}, fmt.Errorf("value @type is not Person: %v", valueType)
+	}
+
+	return Person{
+		Name:  value["name"].(string),
+		Email: value["email"].(string),
+	}, nil
+}
+
+func newAttachmentFromInterface(value map[string]interface{}) (Attachment, error) {
+	valueType, _ := value["@type"].(string)
+
+	if valueType != "ImageObject" {
+		return Attachment{}, fmt.Errorf("value @type is not ImageObject: %v", valueType)
+	}
+
+	height, _ := value["height"].(float64)
+	width, _ := value["width"].(float64)
+
+	return Attachment{
+		Name:   value["name"].(string),
+		Height: int(height),
+		Width:  int(width),
+		URL:    value["url"].(string),
+	}, nil
+}
+
+func newMoneyFromInterface(value map[string]interface{}) (MonetaryAmount, error) {
+	valueType, _ := value["@type"].(string)
+
+	if valueType != "MonetaryAmount" {
+		return MonetaryAmount{}, fmt.Errorf("value @type is not MonetaryAmount: %v", valueType)
+	}
+
+	amount, _ := value["amount"].(float64)
+
+	return MonetaryAmount{
+		Currency: value["currency"].(string),
+		Amount:   amount,
+	}, nil
+}
+
+//endregion

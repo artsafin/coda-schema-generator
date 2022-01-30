@@ -51,9 +51,9 @@ type ColumnFormat struct {
 	TimeFormat            string      `json:"timeFormat"`            // dateTime
 	CurrencyCode          string      `json:"currencyCode"`          // currency
 	MaxUnit               string      `json:"maxUnit"`               // duration (enum "days" "hours" "minutes" "seconds")
-	Minimum               string      `json:"minimum"`               // slider
-	Maximum               string      `json:"maximum"`               // slider, scale
-	Step                  string      `json:"step"`                  // slider
+	Minimum               int         `json:"minimum"`               // slider
+	Maximum               int         `json:"maximum"`               // slider, scale
+	Step                  float64     `json:"step"`                  // slider
 	Icon                  string      `json:"icon"`                  // scale (enum "star" "circle" "fire" "bug" "diamond" "bell" "thumbsup" "heart" "chili" "smiley" "lightning" "currency" "coffee" "person" "battery" "cocktail" "cloud" "sun" "checkmark" "lightbulb")
 	Label                 string      `json:"label"`                 // button (formula)
 	DisableIf             string      `json:"disableIf"`             // button (formula)
@@ -74,17 +74,17 @@ type TableColumns struct {
 	Items     []Column `json:"items"`
 }
 
-func (tc TableColumns) HasMutableRefColumns() bool {
-	return len(tc.GetMutableRefColumns()) > 0
+func (tc TableColumns) HasMutableLookupColumns() bool {
+	return len(tc.GetMutableLookupColumns()) > 0
 }
 
-func (tc TableColumns) GetMutableRefColumns() (cs []Column) {
+func (tc TableColumns) GetMutableLookupColumns() (cs []Column) {
 	if tc.TableType == "view" {
 		return
 	}
 
 	for _, c := range tc.Items {
-		if c.Format.Type == "lookup" && !c.Calculated {
+		if c.Format.Type == ColumnFormatTypeLookup && !c.Calculated {
 			cs = append(cs, c)
 		}
 	}

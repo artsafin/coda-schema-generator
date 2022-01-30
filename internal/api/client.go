@@ -1,9 +1,9 @@
 package api
 
 import (
-	"coda-schema-generator/internal/config"
 	"encoding/json"
 	"fmt"
+	"github.com/artsafin/coda-schema-generator/internal/config"
 	"log"
 	"net/http"
 	"sync"
