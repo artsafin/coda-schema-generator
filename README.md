@@ -37,7 +37,7 @@ Example of generated file:
 
 ## Generate schema for your Coda document
 ```
-docker run --rm ghcr.io/artsafin/coda-schema-generator/coda-schema-generator:main $CODA_TOKEN $CODA_DOCUMENT > internal/codaschema/ids.go
+docker run --rm ghcr.io/artsafin/coda-schema-generator:main $CODA_TOKEN $CODA_DOCUMENT > internal/codaschema/ids.go
 ```
 
 where:
