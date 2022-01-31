@@ -8,38 +8,36 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: GitHub Environment Variables Action
+        uses: FranzDiebold/github-env-vars-action@v2.3.1
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
+      - name: Set up Go 1.17
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.17
+        id: go
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-    - name: Get dependencies
-      run: |
-        go get -v -t -d ./...
+      - name: Build for publishing
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME:$CI_ACTION_REF_NAME
 
-    - name: Build
-      run: make
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Push to GitHub Packages
-      uses: docker/build-push-action@v1
-      with:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-        registry: docker.pkg.github.com
-        repository: artsafin/coda-schema-generator/coda-schema-generator
-        tag_with_ref: true
-        path: .
-        dockerfile: ./Dockerfile
-        add_git_labels: true
+      - name: Push image to GitHub Container Registry
+        run: |
+          echo "Image: $IMAGE_NAME:$CI_ACTION_REF_NAME"
+          docker image push $IMAGE_NAME:$CI_ACTION_REF_NAME
 
-    - name: Notify in telegram
-      run: |
-        curl -XPOST \
-        --data "chat_id=${{ secrets.TG_DEPLOYBOT_CHAT }}&parse_mode=Markdown" \
-        --data "text=Build complete ${GITHUB_REPOSITORY} ${GITHUB_SHA}" \
-        'https://api.telegram.org/bot${{ secrets.TG_DEPLOYBOT_TOKEN }}/sendMessage'
+      - name: Notify in telegram
+        run: |
+          curl -XPOST \
+          --data "chat_id=${{ secrets.TG_DEPLOYBOT_CHAT }}&parse_mode=Markdown" \
+          --data "text=Build complete ${GITHUB_REPOSITORY} ${GITHUB_SHA}" \
+          'https://api.telegram.org/bot${{ secrets.TG_DEPLOYBOT_TOKEN }}/sendMessage'
