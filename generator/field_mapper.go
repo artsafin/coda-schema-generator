@@ -9,41 +9,41 @@ const (
 	lookupRefTypeSuffix = "RowRef"
 )
 
-type Field struct {
+type field struct {
 	Name, Type, ConvertFn string
 }
 
-type LookupField struct {
+type lookupField struct {
 	LookupValuesType string
 	LookupRowRefType string
 	DTOType          string
 }
 
-type FieldMapper struct {
+type fieldMapper struct {
 	namer        nameConverter
-	Fields       map[string][]Field
-	lookupFields map[string]LookupField
+	Fields       map[string][]field
+	lookupFields map[string]lookupField
 }
 
-func NewFieldMapper(namer nameConverter) *FieldMapper {
-	return &FieldMapper{
+func newFieldMapper(namer nameConverter) *fieldMapper {
+	return &fieldMapper{
 		namer:        namer,
-		Fields:       make(map[string][]Field),
-		lookupFields: make(map[string]LookupField),
+		Fields:       make(map[string][]field),
+		lookupFields: make(map[string]lookupField),
 	}
 }
 
-func (m *FieldMapper) GetLookupFields() (r []LookupField) {
+func (m *fieldMapper) GetLookupFields() (r []lookupField) {
 	for _, v := range m.lookupFields {
 		r = append(r, v)
 	}
 	return
 }
 
-func (m *FieldMapper) registerField(tableID string, c dto.Column) {
+func (m *fieldMapper) registerField(tableID string, c dto.Column) {
 	typeData := mapColumnFormatToGoType(m.namer, c)
 
-	m.Fields[tableID] = append(m.Fields[tableID], Field{
+	m.Fields[tableID] = append(m.Fields[tableID], field{
 		Name:      m.namer.ConvertNameToGoSymbol(c.Name),
 		Type:      typeData.LiteralType,
 		ConvertFn: typeData.ValuerFn,
@@ -54,52 +54,52 @@ func (m *FieldMapper) registerField(tableID string, c dto.Column) {
 	}
 }
 
-func (m *FieldMapper) registerLookup(c dto.Column) {
+func (m *fieldMapper) registerLookup(c dto.Column) {
 	if _, ok := m.lookupFields[c.Format.Table.ID]; ok {
 		return
 	}
 
 	referencedTableSym := m.namer.ConvertNameToGoSymbol(c.Format.Table.Name)
 
-	m.lookupFields[c.Format.Table.ID] = LookupField{
+	m.lookupFields[c.Format.Table.ID] = lookupField{
 		LookupValuesType: referencedTableSym + lookupTypeSuffix,
 		LookupRowRefType: referencedTableSym + lookupRefTypeSuffix,
 		DTOType:          referencedTableSym,
 	}
 }
 
-type ColumnTypeData struct {
+type columnTypeData struct {
 	LiteralType string
 	ValuerFn    string
 }
 
-func mapColumnFormatToGoType(namer nameConverter, c dto.Column) ColumnTypeData {
+func mapColumnFormatToGoType(namer nameConverter, c dto.Column) columnTypeData {
 	switch c.Format.Type {
 	case dto.ColumnFormatTypeDateTime:
-		return ColumnTypeData{LiteralType: "time.Time", ValuerFn: "ToDateTime"}
+		return columnTypeData{LiteralType: "time.Time", ValuerFn: "ToDateTime"}
 	case dto.ColumnFormatTypeTime:
-		return ColumnTypeData{LiteralType: "time.Time", ValuerFn: "ToTime"}
+		return columnTypeData{LiteralType: "time.Time", ValuerFn: "ToTime"}
 	case dto.ColumnFormatTypeDate:
-		return ColumnTypeData{LiteralType: "time.Time", ValuerFn: "ToDate"}
+		return columnTypeData{LiteralType: "time.Time", ValuerFn: "ToDate"}
 	case dto.ColumnFormatTypeScale:
-		return ColumnTypeData{LiteralType: "uint8", ValuerFn: "ToUint8"}
+		return columnTypeData{LiteralType: "uint8", ValuerFn: "ToUint8"}
 	case dto.ColumnFormatTypeNumber, dto.ColumnFormatTypeSlider:
-		return ColumnTypeData{LiteralType: "float64", ValuerFn: "ToFloat64"}
+		return columnTypeData{LiteralType: "float64", ValuerFn: "ToFloat64"}
 	case dto.ColumnFormatTypeCheckbox:
-		return ColumnTypeData{LiteralType: "bool", ValuerFn: "ToBool"}
+		return columnTypeData{LiteralType: "bool", ValuerFn: "ToBool"}
 	case dto.ColumnFormatTypeLookup:
 		t := namer.ConvertNameToGoSymbol(c.Format.Table.Name) + lookupTypeSuffix
-		return ColumnTypeData{
+		return columnTypeData{
 			LiteralType: t,
 			ValuerFn:    "To" + t,
 		}
 	case dto.ColumnFormatTypePerson, dto.ColumnFormatTypeReaction:
-		return ColumnTypeData{LiteralType: "[]Person", ValuerFn: "ToPersons"}
+		return columnTypeData{LiteralType: "[]Person", ValuerFn: "ToPersons"}
 	case dto.ColumnFormatTypeImage, dto.ColumnFormatTypeAttachments:
-		return ColumnTypeData{LiteralType: "[]Attachment", ValuerFn: "ToAttachments"}
+		return columnTypeData{LiteralType: "[]Attachment", ValuerFn: "ToAttachments"}
 	case dto.ColumnFormatTypeCurrency:
-		return ColumnTypeData{LiteralType: "MonetaryAmount", ValuerFn: "ToMonetaryAmount"}
+		return columnTypeData{LiteralType: "MonetaryAmount", ValuerFn: "ToMonetaryAmount"}
 	}
 
-	return ColumnTypeData{LiteralType: "string", ValuerFn: "ToString"}
+	return columnTypeData{LiteralType: "string", ValuerFn: "ToString"}
 }

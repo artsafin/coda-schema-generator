@@ -33,7 +33,7 @@ func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 	return result + str[lastIndex:]
 }
 
-func NewNameConverter() nameConverter {
+func newNameConverter() nameConverter {
 	return nameConverter{
 		symbolizer: strings.NewReplacer(
 			"#", "Hash",

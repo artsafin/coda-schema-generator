@@ -5,12 +5,18 @@ import (
 	"flag"
 	"fmt"
 	"github.com/artsafin/coda-schema-generator/dto"
+	"github.com/artsafin/coda-schema-generator/generator"
 	"github.com/artsafin/coda-schema-generator/schema"
 	"io"
 	"os"
 	"strings"
 	"time"
 )
+
+func fatal(format string, vals ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, vals...)
+	os.Exit(1)
+}
 
 func main() {
 	opts, err := parseArgs()
@@ -26,15 +32,18 @@ func main() {
 	if opts.OutputFile != "-" {
 		outputWriter, err = os.OpenFile(opts.OutputFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: unable to open %s for writing\n", opts.OutputFile)
-			os.Exit(1)
+			fatal("error: unable to open %s for writing\n", opts.OutputFile)
 		}
 	}
 
-	err = schema.WriteDoc(opts.APIOptions, opts.PackageName, outputWriter)
+	sch, err := schema.Get(opts.APIOptions)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		fatal("error: %v\n", err)
+	}
+
+	err = generator.Generate(opts.PackageName, sch, outputWriter)
+	if err != nil {
+		fatal("error: %v\n", err)
 	}
 }
 

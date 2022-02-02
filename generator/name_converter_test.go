@@ -20,7 +20,7 @@ func Test_nameConverter_ConvertNameToGoSymbol(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.value, func(t *testing.T) {
-			d := NewNameConverter()
+			d := newNameConverter()
 			assert.Equal(t, tt.expected, d.ConvertNameToGoSymbol(tt.value))
 		})
 	}
@@ -37,7 +37,7 @@ func Test_nameConverter_ConvertNameToGoType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := NewNameConverter()
+			d := newNameConverter()
 			assert.Equal(t, tt.expected, d.ConvertNameToGoType(tt.name, tt.suffix))
 		})
 	}

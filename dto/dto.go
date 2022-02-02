@@ -1,5 +1,12 @@
 package dto
 
+type Schema struct {
+	Tables   TableList
+	Columns  map[string]TableColumns
+	Formulas EntityList
+	Controls EntityList
+}
+
 type ItemsContainer interface {
 	Count() int
 }
