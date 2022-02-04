@@ -11,8 +11,9 @@ type APIOptions struct {
 }
 
 type DumpOptions struct {
-	OutputFile  string
-	PackageName string
+	OutputFile        string
+	SchemaPackageName string
+	APIPackageName    string
 }
 
 type Options struct {

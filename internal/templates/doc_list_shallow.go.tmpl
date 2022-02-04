@@ -1,0 +1,46 @@
+
+
+//region Methods for shallow data fetching (without loading relations)
+
+{{ range .Tables.Items }}
+{{- $table := . }}
+
+func (d *CodaDocument) List{{ fieldName $table.Name }}(ctx context.Context) (list []{{ fieldName $table.Name }}, err error) {
+    rows, err := d.ListAllRows(ctx, ID.Table.{{ fieldName $table.Name }}.ID, {{ $.APIPackageName }}.ListRowsParams{})
+    if err != nil {
+        return
+    }
+
+    for idx, row := range rows {
+        item, err := New{{ fieldName $table.Name }}(&row)
+        if err != nil {
+            return nil, fmt.Errorf("failed to create {{ fieldName $table.Name }} from row %d (%v): %w", idx, row.BrowserLink, err)
+        }
+        list = append(list, item)
+    }
+
+    return
+}
+
+func (d *CodaDocument) MapOf{{ fieldName $table.Name }}(ctx context.Context) (m map[string]{{ fieldName $table.Name }}, err error) {
+    rows, err := d.ListAllRows(ctx, ID.Table.{{ fieldName $table.Name }}.ID, {{ $.APIPackageName }}.ListRowsParams{})
+    if err != nil {
+        return
+    }
+
+	m = make(map[string]{{ fieldName $table.Name }})
+
+    for idx, row := range rows {
+        item, err := New{{ fieldName $table.Name }}(&row)
+        if err != nil {
+            return nil, fmt.Errorf("failed to create {{ fieldName $table.Name }} from row %d (%v): %w", idx, row.BrowserLink, err)
+        }
+        m[row.Id] = item
+    }
+
+    return
+}
+
+{{- end }}
+
+//endregion

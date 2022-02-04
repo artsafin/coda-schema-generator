@@ -16,19 +16,27 @@ func ToString(colID string, row Valuer) (string, error) {
     return strings.Trim(string(bs), `"`), nil
 }
 
+// CodaTimeFormat holds the format used in Coda time values. Regardless of the type it always returns values in this format.
+//
+// Examples:
+//    "Date": "2022-02-03T13:00:00.000-08:00",
+//    "DateTime": "2022-02-04T03:30:00.000-08:00",
+//    "Time": "1899-12-29T13:29:43.000-08:00"
+const CodaTimeFormat = "2006-01-02T15:04:05.999-07:00"
+
 func ToDateTime(colID string, row Valuer) (time.Time, error) {
-    return ToTimeWithFormat(time.RFC3339, colID, row)
+    return ToTimeWithFormat(CodaTimeFormat, colID, row)
 }
 
 func ToDate(colID string, row Valuer) (time.Time, error) {
-    return ToTimeWithFormat("2006-01-02", colID, row)
+    return ToTimeWithFormat(CodaTimeFormat, colID, row)
 }
 
 func ToTime(colID string, row Valuer) (time.Time, error) {
-    return ToTimeWithFormat("15:04:05", colID, row)
+    return ToTimeWithFormat(CodaTimeFormat, colID, row)
 }
 
-func ToTimeWithFormat(format string, colID string, row Valuer) (time.Time, error) {
+func ToTimeWithFormat(format string, colID string, row Valuer) (t time.Time, err error) {
 	rawv, ok := row.GetValue(colID)
 	if !ok {
 		return time.Time{}, nil
@@ -37,12 +45,14 @@ func ToTimeWithFormat(format string, colID string, row Valuer) (time.Time, error
 		if value == "" {
 			return time.Time{}, nil
 		}
-		if timev, err := time.Parse(format, value); err == nil {
-			return timev, nil
+		timev, terr := time.Parse(format, value)
+		if terr != nil {
+			return time.Time{}, terr
 		}
+		return timev, nil
 	}
 
-	return time.Time{}, newFieldError(colID, "RFC3339 date", rawv)
+	return time.Time{}, newFieldError(colID, "string in format " + CodaTimeFormat, rawv)
 }
 
 func ToFloat64(colID string, row Valuer) (float64, error) {

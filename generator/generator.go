@@ -9,12 +9,13 @@ import (
 
 type templateData struct {
 	dto.Schema
-	DTO         *fieldMapper
-	PackageName string
-	name        nameConverter
+	DTO               *fieldMapper
+	SchemaPackageName string
+	APIPackageName    string
+	name              nameConverter
 }
 
-func Generate(packageName string, data *dto.Schema, w io.Writer) error {
+func Generate(schemaPackageName, apiPackageName string, data *dto.Schema, w io.Writer) error {
 	nc := newNameConverter()
 	fm := newFieldMapper(nc)
 
@@ -25,10 +26,11 @@ func Generate(packageName string, data *dto.Schema, w io.Writer) error {
 	}
 
 	tpldata := templateData{
-		Schema:      *data,
-		DTO:         fm,
-		PackageName: packageName,
-		name:        nc,
+		Schema:            *data,
+		DTO:               fm,
+		SchemaPackageName: schemaPackageName,
+		APIPackageName:    apiPackageName,
+		name:              nc,
 	}
 
 	tpl := template.New("main.go.tmpl").
@@ -47,6 +49,8 @@ func Generate(packageName string, data *dto.Schema, w io.Writer) error {
 		return err
 	}
 
+	var additionalFiles []string
+
 	dirs, err := templates.FS.ReadDir("types")
 	if err != nil {
 		return err
@@ -55,15 +59,15 @@ func Generate(packageName string, data *dto.Schema, w io.Writer) error {
 		if typeFile.IsDir() {
 			continue
 		}
-		err = tpl.ExecuteTemplate(w, typeFile.Name(), tpldata)
+		additionalFiles = append(additionalFiles, typeFile.Name())
+	}
+	additionalFiles = append(additionalFiles, "dto.go.tmpl", "doc.go.tmpl", "doc_list_shallow.go.tmpl")
+
+	for _, f := range additionalFiles {
+		err = tpl.ExecuteTemplate(w, f, tpldata)
 		if err != nil {
 			return err
 		}
-	}
-
-	err = tpl.ExecuteTemplate(w, "dto.go.tmpl", tpldata)
-	if err != nil {
-		return err
 	}
 
 	return nil

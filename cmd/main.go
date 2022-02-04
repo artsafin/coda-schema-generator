@@ -41,7 +41,7 @@ func main() {
 		fatal("error: %v\n", err)
 	}
 
-	err = generator.Generate(opts.PackageName, sch, outputWriter)
+	err = generator.Generate(opts.SchemaPackageName, opts.APIPackageName, sch, outputWriter)
 	if err != nil {
 		fatal("error: %v\n", err)
 	}
@@ -83,8 +83,9 @@ func parseArgs() (dto.Options, error) {
 			RequestTimeout: time.Second * 15, // TODO: expose this as program argument
 		},
 		DumpOptions: dto.DumpOptions{
-			OutputFile:  "-",          // TODO: expose this as program argument
-			PackageName: "codaschema", // TODO: expose this as program argument
+			OutputFile:        "-",          // TODO: expose this as program argument
+			SchemaPackageName: "codaschema", // TODO: expose this as program argument
+			APIPackageName:    "codaapi",    // TODO: expose this as program argument
 		},
 	}, nil
 }
