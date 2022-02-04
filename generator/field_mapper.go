@@ -17,6 +17,7 @@ type lookupField struct {
 	LookupValuesType string
 	LookupRowRefType string
 	DTOType          string
+	TableName        string
 }
 
 type fieldMapper struct {
@@ -62,6 +63,7 @@ func (m *fieldMapper) registerLookup(c dto.Column) {
 	referencedTableSym := m.namer.ConvertNameToGoSymbol(c.Format.Table.Name)
 
 	m.lookupFields[c.Format.Table.ID] = lookupField{
+		TableName:        c.Format.Table.Name,
 		LookupValuesType: referencedTableSym + lookupTypeSuffix,
 		LookupRowRefType: referencedTableSym + lookupRefTypeSuffix,
 		DTOType:          referencedTableSym,

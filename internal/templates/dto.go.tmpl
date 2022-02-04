@@ -51,9 +51,13 @@ type {{ .LookupRowRefType }} struct {
 
 func To{{ .LookupValuesType }}(colID string, row Valuer) (values {{ .LookupValuesType }}, err error) {
     rawv, ok := row.GetValue(colID)
-	if !ok {
-		return {{ .LookupValuesType }}{}, nil
-	}
+    if !ok {
+        return {{ .LookupValuesType }}{}, fmt.Errorf("missing column %v in {{ .TableName }} row", colID)
+    }
+
+    if strv, ok := rawv.(string); ok && strv == "" {
+        return {{ .LookupValuesType }}{}, nil
+    }
 
 	if slicev, ok := rawv.([]interface{}); ok {
 		for i, interv := range slicev {

@@ -11,7 +11,9 @@ func ToString(colID string, row Valuer) (string, error) {
 		return strings.Trim(value, "`"), nil
 	}
 
-	return "", newFieldError(colID, "string", rawv)
+	bs, _ := json.Marshal(rawv)
+
+    return strings.Trim(string(bs), `"`), nil
 }
 
 func ToDateTime(colID string, row Valuer) (time.Time, error) {
@@ -58,6 +60,9 @@ func ToFloat64(colID string, row Valuer) (float64, error) {
 	case float32:
 		return float64(v), nil
 	case string:
+	    if strings.Trim(v, " `") == "" {
+            return 0, nil
+        }
 		return strconv.ParseFloat(v, 64)
 	default:
 		return 0, newFieldError(colID, "float64", rawv)
