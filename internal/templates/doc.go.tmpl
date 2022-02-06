@@ -20,28 +20,33 @@ func NewCodaDocument(server, token, docID string, clientOpts ...{{ $.APIPackageN
     return &CodaDocument{
         docID:  docID,
         client: client,
+        relationsCache: make(map[string]interface{}),
     }, nil
 }
 
 type CodaDocument struct {
     docID  string
     client *{{ $.APIPackageName }}.ClientWithResponses
+    relationsCache map[string]interface{} // Used for deep loading to share loaded sub-entities
 }
 
-func (d *CodaDocument) ListAllRows(ctx context.Context, tableID string, additionalListParams {{ $.APIPackageName }}.ListRowsParams) (list []{{ $.APIPackageName }}.Row, err error) {
+func (d *CodaDocument) ListAllRows(ctx context.Context, tableID string, extraParams ...{{ $.APIPackageName }}.ListRowsParam) (list []{{ $.APIPackageName }}.Row, err error) {
     valueFormat := {{ $.APIPackageName }}.ValueFormatRich
     var pageToken {{ $.APIPackageName }}.PageToken
 
-    listParams := additionalListParams
-    listParams.ValueFormat = &valueFormat
-    listParams.PageToken = &pageToken
+    params := {{ $.APIPackageName }}.ListRowsParams{}
+	for _, p := range extraParams {
+		p(&params)
+	}
+    params.ValueFormat = &valueFormat
+    params.PageToken = &pageToken
 
     for {
         resp, err := d.client.ListRowsWithResponse(
             ctx,
             {{ $.APIPackageName }}.DocId(d.docID),
             {{ $.APIPackageName }}.TableIdOrName(tableID),
-            &listParams,
+            &params,
         )
         if err != nil {
             return nil, err

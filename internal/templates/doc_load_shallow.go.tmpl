@@ -1,0 +1,50 @@
+
+
+//region Methods for shallow data fetching (without loading relations)
+
+type RowID string
+
+{{ range .Tables.Items }}
+{{- $table := . }}
+
+func (d *CodaDocument) List{{ fieldName $table.Name }}(ctx context.Context, extraParams ...{{ $.APIPackageName }}.ListRowsParam) (list []{{ fieldName $table.Name }}, err error) {
+    rows, err := d.ListAllRows(ctx, ID.Table.{{ fieldName $table.Name }}.ID, extraParams...)
+    if err != nil {
+        return
+    }
+
+    for idx, row := range rows {
+        item, err := New{{ fieldName $table.Name }}(&row)
+        if err != nil {
+            return nil, fmt.Errorf("failed to create {{ fieldName $table.Name }} from row %d (%v): %w", idx, row.BrowserLink, err)
+        }
+        list = append(list, item)
+    }
+
+    return
+}
+
+func (d *CodaDocument) MapOf{{ fieldName $table.Name }}(ctx context.Context, extraParams ...{{ $.APIPackageName }}.ListRowsParam) (m map[RowID]{{ fieldName $table.Name }}, maporder []RowID, err error) {
+    rows, err := d.ListAllRows(ctx, ID.Table.{{ fieldName $table.Name }}.ID, extraParams...)
+    if err != nil {
+        return
+    }
+
+    m = make(map[RowID]{{ fieldName $table.Name }}, len(rows))
+    maporder = make([]RowID, 0, len(rows))
+
+    for idx, row := range rows {
+        item, err := New{{ fieldName $table.Name }}(&row)
+        if err != nil {
+            return nil, nil, fmt.Errorf("failed to create {{ fieldName $table.Name }} from row %d (%v): %w", idx, row.BrowserLink, err)
+        }
+        maporder = append(maporder, RowID(row.Id))
+        m[RowID(row.Id)] = item
+    }
+
+    return
+}
+
+{{- end }}
+
+//endregion

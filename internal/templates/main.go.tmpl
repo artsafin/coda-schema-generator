@@ -66,21 +66,6 @@ type {{typeName .Name "TableColumns"}} struct {
 
 //endregion
 
-//region Mutable table references enumerations
-
-{{ range .Tables.Items }}
-{{- $columns := index $.Columns .ID }}
-{{- if $columns.HasMutableLookupColumns }}
-type {{fieldName .Name }}Refs struct {
-    {{- range $columns.GetMutableLookupColumns }}
-    {{ fieldName .Name }} bool
-    {{- end}}
-}
-{{- end }}
-{{- end }}
-
-//endregion
-
 var ID = _schema{
     Table: _tableSchema{
         {{- range .Tables.Items }}

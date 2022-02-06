@@ -61,7 +61,7 @@ func Generate(schemaPackageName, apiPackageName string, data *dto.Schema, w io.W
 		}
 		additionalFiles = append(additionalFiles, typeFile.Name())
 	}
-	additionalFiles = append(additionalFiles, "dto.go.tmpl", "doc.go.tmpl", "doc_list_shallow.go.tmpl")
+	additionalFiles = append(additionalFiles, "dto.go.tmpl", "doc.go.tmpl", "doc_load_shallow.go.tmpl", "doc_load_deep.go.tmpl")
 
 	for _, f := range additionalFiles {
 		err = tpl.ExecuteTemplate(w, f, tpldata)

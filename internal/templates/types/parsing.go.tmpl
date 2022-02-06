@@ -1,6 +1,10 @@
 
 
-//region Basic types parsing
+//region Parsing of basic internal types
+
+type Valuer interface {
+	GetValue(key string) (value interface{}, ok bool)
+}
 
 func ToString(colID string, row Valuer) (string, error) {
 	rawv, ok := row.GetValue(colID)

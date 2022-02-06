@@ -23,4 +23,6 @@ const (
 	ColumnFormatTypeSlider      string = "slider"
 	ColumnFormatTypeText        string = "text"
 	ColumnFormatTypeTime        string = "time"
+
+	TableTypeView string = "view"
 )

@@ -35,7 +35,7 @@ func New{{ fieldName $table.Name }}(row Valuer) (dto {{ fieldName $table.Name }}
 type {{ .LookupValuesType }} struct {
     Values []{{ .LookupRowRefType }}
 }
-func (l *{{ .LookupValuesType }}) FirstRef() (first {{ .LookupRowRefType }}, found bool) {
+func (l {{ .LookupValuesType }}) FirstRef() (first {{ .LookupRowRefType }}, found bool) {
 	if len(l.Values) > 0 {
 		return l.Values[0], true
 	}
@@ -43,7 +43,7 @@ func (l *{{ .LookupValuesType }}) FirstRef() (first {{ .LookupRowRefType }}, fou
 	return {{ .LookupRowRefType }}{}, false
 }
 
-func (l *{{ .LookupValuesType }}) FirstData() {{ .DTOType }} {
+func (l {{ .LookupValuesType }}) FirstData() {{ .DTOType }} {
 	if len(l.Values) > 0 && l.Values[0].Data != nil {
 		return *l.Values[0].Data
 	}
@@ -51,7 +51,7 @@ func (l *{{ .LookupValuesType }}) FirstData() {{ .DTOType }} {
 	return {{ .DTOType }}{}
 }
 
-func (l *{{ .LookupValuesType }}) Data() (data []{{ .DTOType }}) {
+func (l {{ .LookupValuesType }}) Data() (data []{{ .DTOType }}) {
 	for _, i := range l.Values {
 		if i.Data != nil {
 			data = append(data, *i.Data)
