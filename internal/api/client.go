@@ -5,43 +5,29 @@ import (
 	"errors"
 	"fmt"
 	"github.com/artsafin/coda-schema-generator/dto"
-	"log"
 	"net/http"
 	"sync"
 )
 
+type HTTPDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+type Printer interface {
+	Printf(format string, v ...interface{})
+}
+
 type client struct {
-	opts dto.APIOptions
-	http *http.Client
-}
-
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (fn roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return fn(req)
-}
-
-func NewClient(options dto.APIOptions) *client {
-	c := &client{
-		opts: options,
-	}
-	c.http = &http.Client{
-		Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			c.logvf("request: %s\n", req.URL.String())
-			req.Header.Set("Authorization", "Bearer "+options.Token)
-			return http.DefaultTransport.RoundTrip(req)
-		}),
-		Timeout: options.RequestTimeout,
-	}
-
-	return c
+	opts   dto.APIOptions
+	http   HTTPDoer
+	logger Printer
 }
 
 func (c *client) logvf(format string, params ...interface{}) {
 	if !c.opts.Verbose {
 		return
 	}
-	log.Printf(format, params...)
+	c.logger.Printf(format, params...)
 }
 
 func (c *client) endpointf(endpoint string, params ...interface{}) string {
@@ -53,7 +39,12 @@ func (c *client) loadEntities(res dto.ItemsContainer, entityType string) (err er
 		c.logvf("finished loading %s: %d items", entityType, res.Count())
 	}()
 
-	resp, err := c.http.Get(c.endpointf("docs/%s/%s", c.opts.DocID, entityType))
+	req, err := http.NewRequest("GET", c.endpointf("docs/%s/%s", c.opts.DocID, entityType), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.http.Do(req)
 	if err != nil {
 		c.logvf("error fetching %s entities: %v", entityType, err)
 		return err
@@ -114,7 +105,12 @@ func (c *client) LoadColumns(tables dto.TableList) (cm map[string]dto.TableColum
 		go func(tableID, tableType string) {
 			defer wg.Done()
 
-			resp, err := c.http.Get(c.endpointf("docs/%s/tables/%s/columns", c.opts.DocID, tableID))
+			req, err := http.NewRequest("GET", c.endpointf("docs/%s/tables/%s/columns", c.opts.DocID, tableID), nil)
+			if err != nil {
+				c.logvf("error fetching columns of %s: %v", tableID, err)
+				return
+			}
+			resp, err := c.http.Do(req)
 
 			if err != nil {
 				c.logvf("error fetching columns of %s: %v", tableID, err)

@@ -39,7 +39,7 @@ func Generate(schemaPackageName, apiPackageName string, data *dto.Schema, w io.W
 			"typeName":  tpldata.name.ConvertNameToGoType,
 		})
 
-	tpl, err := tpl.ParseFS(templates.FS, "*.tmpl", "types/*.tmpl")
+	tpl, err := tpl.ParseFS(templates.FS, "*.tmpl")
 	if err != nil {
 		return err
 	}
@@ -49,19 +49,15 @@ func Generate(schemaPackageName, apiPackageName string, data *dto.Schema, w io.W
 		return err
 	}
 
-	var additionalFiles []string
-
-	dirs, err := templates.FS.ReadDir("types")
-	if err != nil {
-		return err
+	additionalFiles := []string{
+		"coda_types.go.tmpl",
+		"errors.go.tmpl",
+		"parsing.go.tmpl",
+		"dto.go.tmpl",
+		"doc.go.tmpl",
+		"doc_load_shallow.go.tmpl",
+		"doc_load_deep.go.tmpl",
 	}
-	for _, typeFile := range dirs {
-		if typeFile.IsDir() {
-			continue
-		}
-		additionalFiles = append(additionalFiles, typeFile.Name())
-	}
-	additionalFiles = append(additionalFiles, "dto.go.tmpl", "doc.go.tmpl", "doc_load_shallow.go.tmpl", "doc_load_deep.go.tmpl")
 
 	for _, f := range additionalFiles {
 		err = tpl.ExecuteTemplate(w, f, tpldata)

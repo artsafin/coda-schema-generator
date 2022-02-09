@@ -6,7 +6,7 @@ import (
 )
 
 func Get(opts dto.APIOptions) (s *dto.Schema, err error) {
-	coda := api.NewClient(opts)
+	coda := api.NewHTTPClient(opts)
 
 	var tables dto.TableList
 	if tables, err = coda.LoadTables(); err != nil {
