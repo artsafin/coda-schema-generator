@@ -67,7 +67,7 @@ This is the most interesting part!
 
 The output file will contain the following code:
 
-## `codaschema.ID` variable and structs reflecting their IDs
+## `codaschema.ID` variable and related strongly-typed structs to store IDs
 
 There are tables, columns, formulas and controls type structs reflecting _metadata_ of the entities contained in the document.
 They are useful only as formula comments holders and as helper types for populating the `codaschema.ID` (see next section)
