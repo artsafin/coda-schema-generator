@@ -162,27 +162,28 @@ These structs and constructors are useful on their own as they assume nothing ab
 
 ### Lookup types
 
-##### Lookup type `<Table Name>Lookup`
+#### Lookup type `<Table Name>Lookup`
 
-For each table that is referenced by other tables in Lookups the generator yields `<Table Name>Lookup` types.
-They represent a slice of references to rows in another table to which the Lookup in Coda is made.
+For each Coda table that is referenced by other Coda tables or views in Lookup columns the generator yields a `<Table Name>Lookup` type.
 
-Example of `<Table Name>Lookup` type:
+The lookup type represents possible multiple lookup values in the document as a slice of row references to another table (to which the Lookup in Coda is made).
+
+Example of `<Table Name>Lookup` struct definition:
 
 ```
 type LocationLookup struct {
     Values []LocationRowRef
 }
 ```
+Lookup type's `Values` is a slice because generally Coda allows to store multiple references in one table cell.
 
 Lookup types also have handy methods to fetch the first row reference and the data of the first row reference.
 
-##### Row reference type `<Table Name>RowRef`
+A lookup type is only a container of the references to some another table rows, holding data no more than Coda provides it in API when the table rows are fetched.
+
+#### Row reference type `<Table Name>RowRef`
 
 A reference to a row is a `<Table Name>RowRef` type.
-When the table data is loaded this struct contains data to the extent possible to extract from original request without doing extra HTTP requests.
-
-The `<Table Name>RowRef` type also has a `Data` field with type of the target referenced table. It will be used by deep data loaders, see below.
 
 Example of `<Table Name>RowRef`:
 
@@ -193,12 +194,17 @@ type LocationRowRef struct {
     Data  *Location
 }
 ```
+When the table data is loaded this struct is guaranteed to contain `Name` and `RowID`.
 
+The `Data` will be empty because it requires extra HTTP request to be populated. The `Data` field has a type of the target referenced table. It will be used by deep data loaders, see [Deep loading](#deep-loading) section below.
+
+`Name` is a value of Display column of the referenced table. In some usecases having just this value may be enough for the purposes of the app even without deep-loading of the row data. However using Name in cases except printing to the user is not recommended as the semantic use of the `Name` in app cannot be reliably verified against changes of Display column in Coda.
+
+`Row ID` is a unique ID of the row, for example - `"i-4p2VnnLVjo"`. It is not what the `RowId(thisRow)` Coda formula returns.
 
 ## Loading data into structs
 
-coda-schema-generator generates functions for fetching table data into the generated structs using the https://github.com/artsafin/coda-go-client Coda client API library.
-
+The generator creates functions that leverage previously described data structures and constructors for fetching table data directly from the Coda REST API using the https://github.com/artsafin/coda-go-client client library.
 
 ### CodaDocument type
 
