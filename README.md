@@ -315,17 +315,10 @@ package main
 
 import (
 	"context"
-	"errors"
-	"flag"
 	"fmt"
-	"github.com/artsafin/coda-data/codaschema"
+	"test-app/codaschema"
 	"github.com/artsafin/coda-go-client/codaapi"
-	"github.com/artsafin/coda-schema-generator/dto"
-	"github.com/artsafin/coda-schema-generator/generator"
-	"github.com/artsafin/coda-schema-generator/schema"
 	"os"
-	"strings"
-	"time"
 )
 
 func main() {
