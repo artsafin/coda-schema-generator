@@ -1,5 +1,5 @@
 # coda-schema-generator
-Represents a Coda.io document as Go code structs and methods (see [# Generated code]() below).
+Represents a Coda.io document as Go code structs and methods (see [# Generated code](#generated-code) below).
 Generated code is assumed to be used as part of a more complicated Go application that extend Coda.io capabilities.
 
 It allows to use Coda document programmatically:
