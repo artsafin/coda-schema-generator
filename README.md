@@ -196,7 +196,7 @@ type LocationRowRef struct {
 ```
 When the table data is loaded this struct is guaranteed to contain `Name` and `RowID`.
 
-The `Data` will be empty because it requires extra HTTP request to be populated. The `Data` field has a type of the target referenced table. It will be used by deep data loaders, see [Deep loading](#deep-loading) section below.
+The `Data` will be empty because it requires an extra HTTP request to be populated. The `Data` field has a type of the target referenced table. It will be used by deep data loaders, see [Deep loading](#deep-loading) section below.
 
 `Name` is a value of Display column of the referenced table. In some usecases having just this value may be enough for the purposes of the app even without deep-loading of the row data. However using Name in cases except printing to the user is not recommended as the semantic use of the `Name` in app cannot be reliably verified against changes of Display column in Coda.
 
@@ -208,7 +208,9 @@ The generator creates functions that leverage previously described data structur
 
 ### CodaDocument type
 
-`CodaDocument` is an abstraction of the Coda Document to avoid passing around document ID every time. Functions for loading all have the `CodaDocument` receiver.
+`CodaDocument` is an abstraction of the Coda Document to avoid passing around common parameters every time.
+
+Methods for data loading are all having the `CodaDocument` receiver.
 
 `CodaDocument` has a common `ListAllRows` method that can be used separately to build your own logic:
 
@@ -247,12 +249,14 @@ Example of usage:
 
 
 `CodaDocument` also contains functions specific to your document tables with two flavors:
-- shallow loading of the data - i.e. loading minimal data with just one HTTP request;
+- shallow loading of the data - i.e. loading minimal data with just one HTTP request per table ([see note](#pagination));
 - deep loading - routines to enrich shallow data with the nested data of the Lookup columns. They load data into the `codaschema.<Table Name>Lookup[N].Data` fields.
 
 ### Shallow loading
 
-**`List<TableName>` methods** -- load data is a slice of `<Table Name>` structs.
+The methods here are just syntactic sugar on top of the `ListAllRows` method.
+
+**`List<TableName>` methods** -- load data as a slice of `<Table Name>` structs.
 
 Example signature:
 
@@ -260,7 +264,9 @@ Example signature:
 func (d *CodaDocument) ListAllUsers(ctx context.Context, extraParams ...codaapi.ListRowsParam) ([]codaschema.AllUsers, error)
 ```
 
-**`MapOf<TableName>` methods** -- load data in a map indexed by Coda Row ID. Additionally since Go doesn't maintain an order of the map it returns an ordered slice of Row IDs. 
+The slice will be ordered in the way Coda returns rows via the API. You can use the `codaapi.ListRows.SortBy(...)` parameter with the `codaapi.RowsSortBy*` constants to control the order.
+
+**`MapOf<TableName>` methods** -- load data as a map of `<Table Name>` structs keyed by Coda row ID. The method also returns a slice of row IDs that conveys the order in which the rows were returned from the Coda API (because Go doesn't maintain an order in `map`s). 
 
 Example signature:
 
@@ -268,34 +274,39 @@ Example signature:
 func (d *CodaDocument) MapOfAllUsers(ctx context.Context, extraParams ...codaapi.ListRowsParam) (map[RowID]AllUsers, []RowID, error)
 ```
 
-`MapOf` methods were created to deal with lookup relations easier.
-They are extensively used in deep loading functions.
+`MapOf` methods were created to deal with lookup relations - in such scenario you usually know the Row ID and would like to address rows by ID directly.
 
 ### Deep loading
 
 Deep loading methods require an already loaded map of data using `MapOf` methods.
-They go through the rows and populate the `Data` field of the `RowRef` structs of all lookup values.
+They go through the rows and populate the `Data` field of the `RowRef` structs of the lookup values.
 
-The method itself does not return anything, it just updates the map passed to the function.
+The method mutates the map passed to the function.
 
 Example signature:
 ```
 func (doc *CodaDocument) LoadRelationsAllUsers(ctx context.Context, shallow map[RowID]codaschema.AllUsers, rels codaschema.Tables) (err error)
 ```
 
-The last argument is a special `codaschema.Tables` struct that is used as enumeration of all tables in the document.
-By this argument one can specify which kind of the Lookups to deep-load.
+The last argument is a `codaschema.Tables` struct which is an enumeration of the document tables. This argument specifies which Lookup relations should be loaded by the `LoadRelations` method.
 
 `LoadRelations<Table Name>` methods load _all related_ table data into an internal `CodaDocument` cache.
 
 This approach has it's pros and cons:
 
-- Pro: relation-loading is mostly a special routine in the main app when a lot of deeply-loaded entities are needed at once, therefore raising HIT/MISS cache ratio.
-  Caching data of each kind of the referenced table at CodaDocument struct allows to optimize application by CPU and time (sacrificing RAM);
+- Pro: relation loading is mostly a special routine in the app when a lot of deeply-loaded entities are needed at once, therefore raising HIT/MISS cache ratio.
+  Caching data of each kind of the referenced table at CodaDocument struct optimizes application by CPU and time while sacrificing RAM;
 - Pro: every kind of data is loaded and parsed only once; even for further calls to other `LoadRelations<Table Name>` methods no extra requests will be made
-- Cons: the volume of the referenced data may be high and it is not limited in any way. Unfortunately Coda API doesn't provide any way to fetch needed rows in batch by their IDs.
+- Pro: solves the N+1 problem
+- Cons: the volume of the referenced data may be high and it is not limited in any way ([see note](#pagination)). Unfortunately Coda API doesn't provide any way to fetch only needed rows in batch by their IDs.
   Extra RAM usage can be an issue
 - Cons: cache is not invalidated nor cleared; `CodaDocument` instance lifecycle should be as short as possible
+
+### Pagination
+
+The `ListAllRows` routine loads all the pages of the table data, so as methods depending on it - `ListRows<Table Name>`, `MapOf<Table Name>` etc.
+
+Since each load of the page makes a separate HTTP request loading the big table will issue several HTTP requests depending on the page size.
 
 # Example of application using codaschema
 
@@ -361,10 +372,12 @@ func main() {
 }
 ```
 
-## Miscellaneous supporting functions and types
+## Other generated stuff
 
-- `Valuer` interface that decouples an API library (`github.com/artsafin/coda-go-client`) from the generated code `codaschema`
-- Various structs reflecting some Coda complex types: Person, MonetaryAmount, Attachment (ImageObject) and a Structured Value.
+This includes supporting functions and types for all of the above:
+
+- `Valuer` interface that decouples an API library https://github.com/artsafin/coda-go-client from the generated code
+- Various structs reflecting some Coda complex types: Person, MonetaryAmount, Attachment/ImageObject and a Structured Value.
 - Routines for parsing of basic internal types (strings, dates, numbers etc)
 - Aggregate errors container
 
@@ -373,7 +386,8 @@ Mostly these are useful only for other `codaschema` code.
 # Known shortcomings
 
 - One may have security concerns about feeding the generator an API key exposing access to sensitive data
-- There is no way to limit what is being generated yet - medium-sized document (~30 tables, ~20 views, ~20 canvas formulas) can yield ~10k LOC generated
-- Mostly this project is targeted to work with Coda in readonly mode
-- It doesn't include APIs to work with Packs
+- Coda allows to violate column types via Formulas. E.g. if there is a Lookup column but the column formula yields a string onto the cell value the loading routines will result in error. Types are generated according to the column metadata and the data conversion routine (that is part of the loading) will fail unless the data fits the declared type
+- There is no way to limit what code do you need - medium-sized document (~30 tables, ~20 views, ~20 canvas formulas) can yield ~10k LOC
+- This project is targeted to work with Coda in readonly mode
+- It doesn't include APIs to work with Packs because the client library has an issue with OpenAPI schemas when they have `Response` suffixes (which is the case for all Packs APIs)
 - The project itself has a minimal test coverage - I'm not yet certain on how to test generated code yet
