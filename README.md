@@ -208,10 +208,9 @@ The generator creates functions that leverage previously described data structur
 
 ### CodaDocument type
 
-Functions for loading all have the `CodaDocument` receiver which makes up an abstraction of the Coda Document and simplifies operations.
+`CodaDocument` is an abstraction of the Coda Document to avoid passing around document ID every time. Functions for loading all have the `CodaDocument` receiver.
 
-`CodaDocument` has a common `ListAllRows` method that can be used separately to build your own logic.
-The signature is as follows:
+`CodaDocument` has a common `ListAllRows` method that can be used separately to build your own logic:
 
 ```
 func (d *CodaDocument) ListAllRows(ctx context.Context, tableID string, extraParams ...codaapi.ListRowsParam) ([]codaapi.Row, error)
@@ -220,7 +219,7 @@ func (d *CodaDocument) ListAllRows(ctx context.Context, tableID string, extraPar
 Where:
 - `codaapi.Row` type satisfies the `codaschema.Valuer` interface and therefore can be used with `New<Table Name>` data constructors
 - `tableID` can be taken from `codaschema.ID.Tables.<Table Name>.ID`
-- `codaapi.ListRowsParam` is a way to set the Query Parameters for the [ListRows operation](https://coda.io/developers/apis/v1#operation/listRows)
+- `codaapi.ListRowsParam` is a way to set the Query Parameters for the [ListRows API endpoint](https://coda.io/developers/apis/v1#operation/listRows)
 
 Example of usage:
 ```
@@ -231,8 +230,8 @@ Example of usage:
         ctx,
         codaschema.ID.Table.AllUsers.ID,
         codaapi.ListRows.SortBy(codaapi.RowsSortByNatural),
-		codaapi.ListRows.Query(codaschema.ID.Table.AllUsers.Cols.FirstName.ID, "donald"),
-	)
+        codaapi.ListRows.Query(codaschema.ID.Table.AllUsers.Cols.FirstName.ID, "donald"),
+    )
     if err != nil {
         ...
     }
@@ -248,8 +247,8 @@ Example of usage:
 
 
 `CodaDocument` also contains functions specific to your document tables with two flavors:
-- shallow loading of the data - i.e. without loading data into `codaschema.*Lookup` structs
-- deep loading - with loading related lookups and putting the actual data into `codaschema.*Lookup` structs
+- shallow loading of the data - i.e. loading minimal data with just one HTTP request;
+- deep loading - routines to enrich shallow data with the nested data of the Lookup columns. They load data into the `codaschema.<Table Name>Lookup[N].Data` fields.
 
 ### Shallow loading
 
