@@ -110,12 +110,12 @@ So this is considered a good practice as it encourages to keep the mental model 
 
 ## Data structs reflecting the document data model and their constructors
 
-These structs reflect Coda tables/views and their columns as a normal Go struct.
-The types of the struct fields will be as close to the column types of the source table as possible.
+The data structs will be created with `<Table Name>` type names and represent one row of table/view data. Fields of the data struct will reflect the columns of the table.
+The types of the struct fields will be as close to the column types of the source table as possible (see [Type Mapping](#type-mapping) below).
 
-Additionally there will be a `New*` constructor generated per each struct that accepts a `Valuer` interface as a table row representation.
+Additionally there will be a `New<Table Name>` constructor generated per each table that creates an instance of the table row from a `Valuer` interface.
 
-For example if there is a `All Users` table in Coda with a `first name` and `last name` columns there will be:
+For example if there is a `All Users` table in Coda with a `first name`, `last name` and `location` columns there will be:
 
 ```
 type Valuer interface {
@@ -143,8 +143,7 @@ func NewLocation(row codaschema.Valuer) (codaschema.Location, error) {
 }
 ```
 
-These structs and constructors are useful on their own as they assume nothing about the way how the data has been loaded
-and return clean strongly-typed structs containing the data ready to use.
+These structs and constructors are useful on their own as they assume nothing about the way how the data has been loaded (by means of `Valuer`) and return clean strongly-typed structs containing the minimal data without implications on how to work with them.
 
 
 ### Type mapping
@@ -155,9 +154,9 @@ and return clean strongly-typed structs containing the data ready to use.
 | Scale                     | `uint8`                                                                        |
 | Number, Slider            | `float64`                                                                      |
 | Checkbox                  | `bool`                                                                         |
-| Person, Reaction          | [`[]codaschema.Person`](blob/main/internal/templates/coda_types.go.tmpl)       |
-| Image, Attachment         | [`[]codaschema.Attachment`](blob/main/internal/templates/coda_types.go.tmpl)   |
-| Currency                  | [`codaschema.MonetaryAmount`](blob/main/internal/templates/coda_types.go.tmpl) |
+| Person, Reaction          | [`[]codaschema.Person`](internal/templates/coda_types.go.tmpl)       |
+| Image, Attachment         | [`[]codaschema.Attachment`](internal/templates/coda_types.go.tmpl)   |
+| Currency                  | [`codaschema.MonetaryAmount`](internal/templates/coda_types.go.tmpl) |
 | Lookup                    | `codaschema.<Table Name>Lookup` (see below more on Lookup types)               |
 | (the rest)                | `string`                                                                       |
 
