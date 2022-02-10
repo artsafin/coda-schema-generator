@@ -25,4 +25,6 @@ const (
 	ColumnFormatTypeTime        string = "time"
 
 	TableTypeView string = "view"
+
+	SpecialTableGlobalExternalConnections string = "Global-External-Connections"
 )

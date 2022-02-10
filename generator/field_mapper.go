@@ -50,7 +50,7 @@ func (m *fieldMapper) registerField(tableID string, c dto.Column) {
 		ConvertFn: typeData.ValuerFn,
 	})
 
-	if c.Format.Type == dto.ColumnFormatTypeLookup {
+	if typeData.IsLookup {
 		m.registerLookup(c)
 	}
 }
@@ -73,6 +73,7 @@ func (m *fieldMapper) registerLookup(c dto.Column) {
 type columnTypeData struct {
 	LiteralType string
 	ValuerFn    string
+	IsLookup    bool
 }
 
 func mapColumnFormatToGoType(namer nameConverter, c dto.Column) columnTypeData {
@@ -91,9 +92,20 @@ func mapColumnFormatToGoType(namer nameConverter, c dto.Column) columnTypeData {
 		return columnTypeData{LiteralType: "bool", ValuerFn: "ToBool"}
 	case dto.ColumnFormatTypeLookup:
 		t := namer.ConvertNameToGoSymbol(c.Format.Table.Name) + lookupTypeSuffix
+
+		if c.Format.Table.ID == dto.SpecialTableGlobalExternalConnections {
+			// Looks like an internal thing to Coda, better not deal with it
+			return columnTypeData{
+				LiteralType: "structuredValue",
+				ValuerFn:    "toStructuredValueFromValuer",
+				IsLookup:    c.IsLookup(),
+			}
+		}
+
 		return columnTypeData{
 			LiteralType: t,
 			ValuerFn:    "To" + t,
+			IsLookup:    c.IsLookup(),
 		}
 	case dto.ColumnFormatTypePerson, dto.ColumnFormatTypeReaction:
 		return columnTypeData{LiteralType: "[]Person", ValuerFn: "ToPersons"}

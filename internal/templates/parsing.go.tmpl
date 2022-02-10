@@ -106,6 +106,15 @@ func ToUint8(colID string, row Valuer) (uint8, error) {
 	return 0, newFieldError(colID, "uint8", rawv)
 }
 
+func toStructuredValueFromValuer(colID string, row Valuer) (sv structuredValue, err error) {
+	rawv, ok := row.GetValue(colID)
+	if !ok {
+		return structuredValue{}, nil
+	}
+
+	return toStructuredValue(rawv)
+}
+
 func toStructuredValue(rawv interface{}) (sv structuredValue, err error) {
 	var ok bool
 	var mapv map[string]interface{}
