@@ -61,6 +61,8 @@ func main() {
 }
 ```
 
+For example it allows to exclude some tables or columns from generation.
+
 # Generated code
 
 This is the most interesting part!
@@ -74,13 +76,14 @@ They are useful only as formula comments holders and as helper types for populat
 
 ### `codaschema.ID` variable
 
-The `codaschema.ID` global variable contains an enumeration of all document entities with their IDs and human names.
+The `codaschema.ID` global variable contains an enumeration of document entities metadata - their IDs and human names.
 
-This can be useful in it's own to refer to tables, table columns, etc by their human names without need of manual hardcoding of these IDs to your code.
+Mostly this is useful only to _refer_ to tables, table columns, etc by their human names for future use in calling Coda APIs.
+Otherwise one would need not only to hardcode them manually but also to keep them up to date along with changes in the Coda document.
 
 For example if there is a `All Users` table in Coda with a `first name` and `last name` columns the generated code will include:
 
-(note using  and `codaschema.ID.Table.Users.ID` instead of plain names or)
+(note how the names are converted to Go symbols)
 
 ```
 codaschema.ID.Table.AllUsers // Structure related to the [All Users] table
@@ -99,10 +102,9 @@ codaschema.ID.Table.AllUsers.Cols.FirstName.ID   // (see below)
 codaschema.ID.Table.AllUsers.Cols.FirstName.Name // String fields containing ID and name of the column (similar to table)
 ```
 
-Changing name of the table/column in Coda document and regenerating the code **will change** the schema -- thus bringing your app under chances of misusing of some `codaschema.ID.*` symbols.
+Changing name of the table/column in Coda document and regenerating the code **will change** the schema -- thus possibly making your app impossible to build because it may have used fields that are undefined now.
 
-The reason behind that is the difference of typical lifecycles of the Go application and Coda document:
-it is very easy to quickly change a structure of the Coda document (thanks to the team behind the Coda!) and the way how it is used by other people but it's not so easy to keep the same pace of the changes on the Go app side.  
+The reason behind that is the difference of typical lifecycles of the Go application and Coda document: thanks to the team behind the Coda it is very easy to rapidly change a structure of the Coda document and overturn the whole way how the document is modelled. But it's not so easy to keep the same pace of the changes on the Go app side.  
 
 So this is considered a good practice as it encourages to keep the mental model of the document with the app code up to date.
 
