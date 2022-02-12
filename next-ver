@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+NEWVER="$1"
+
+if [ -z "$NEWVER" ]; then
+    echo "New version must be passed"
+    exit 1
+fi
+
+
+OLDVER=$(git tag -l | grep "^v[0-9]\+\.[0-9]\+\.[0-9]\+" | sort -V | tail -n1)
+
+if ! git diff HEAD --exit-code > /dev/null; then
+    echo "Working copy contains changes; please commit them first"
+    exit 1
+fi
+
+sed "s/${OLDVER}/${NEWVER}/" < README.md > README.md.tmp
+mv README.md.tmp README.md
+rm README.md.tmp
+

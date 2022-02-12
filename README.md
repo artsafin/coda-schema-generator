@@ -18,7 +18,7 @@ This creates an orthogonal usage of the generated file -- finding/keeping record
 
 ## Generate schema for your Coda document
 ```
-docker run --rm ghcr.io/artsafin/coda-schema-generator:v1.0.5 $CODA_TOKEN $CODA_DOCUMENT > internal/codaschema/codaschema.go
+docker run --rm ghcr.io/artsafin/coda-schema-generator:v1.0.6 $CODA_TOKEN $CODA_DOCUMENT > internal/codaschema/codaschema.go
 ```
 
 where:
