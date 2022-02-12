@@ -19,5 +19,6 @@ fi
 
 sed "s/${OLDVER}/${NEWVER}/" < README.md > README.md.tmp
 mv README.md.tmp README.md
-rm README.md.tmp
+
+git tag "${NEWVER}"
 
