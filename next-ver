@@ -24,6 +24,7 @@ git diff --color-words README.md
 
 echo ""
 echo "Press ENTER to apply changes or Ctrl+C to cancel"
+read
 
 git commit -m "Release version ${NEWVER}" README.md
 
