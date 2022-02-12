@@ -22,6 +22,9 @@ mv README.md.tmp README.md
 
 git diff --color-words README.md
 
+echo ""
+echo "Press ENTER to apply changes or Ctrl+C to cancel"
+
 git commit -m "Release version ${NEWVER}" README.md
 
 git tag "${NEWVER}"
