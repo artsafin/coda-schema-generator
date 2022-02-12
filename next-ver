@@ -17,17 +17,39 @@ if ! git diff HEAD --exit-code > /dev/null; then
     exit 1
 fi
 
+cp README.md README.md.bak
 sed "s/${OLDVER}/${NEWVER}/" < README.md > README.md.tmp
 mv README.md.tmp README.md
 
 git diff --color-words README.md
 
-echo ""
-echo "Press ENTER to apply changes or Ctrl+C to cancel"
-read
+asksure() {
+  while read -r -n 1 -s answer; do
+    if [[ $answer = [YyNn] ]]; then
+      [[ $answer = [Yy] ]] && retval=0
+      [[ $answer = [Nn] ]] && retval=1
+      break
+    fi
+  done
 
-git commit -m "Release version ${NEWVER}" README.md
+  echo
 
-git tag "${NEWVER}"
+  return $retval
+}
 
-git push --tags
+echo
+echo "==="
+echo -n "Apply changes (y/n)? "
+
+if asksure; then
+  rm README.md.bak
+
+  git commit -m "Release version ${NEWVER}" README.md
+
+  git tag "${NEWVER}"
+
+  git push --tags
+else
+  echo "Restoring README.md"
+  mv README.md.bak README.md
+fi
