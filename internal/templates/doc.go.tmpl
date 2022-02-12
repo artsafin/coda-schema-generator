@@ -20,14 +20,14 @@ func NewCodaDocument(server, token, docID string, clientOpts ...{{ $.APIPackageN
     return &CodaDocument{
         docID:  docID,
         client: client,
-        relationsCache: make(map[string]interface{}),
+        relationsCache: &sync.Map{},
     }, nil
 }
 
 type CodaDocument struct {
     docID  string
     client *{{ $.APIPackageName }}.ClientWithResponses
-    relationsCache map[string]interface{} // Used for deep loading to share loaded sub-entities
+    relationsCache *sync.Map // Used for deep loading to share loaded sub-entities
 }
 
 func (d *CodaDocument) ListAllRows(ctx context.Context, tableID string, extraParams ...{{ $.APIPackageName }}.ListRowsParam) (list []{{ $.APIPackageName }}.Row, err error) {

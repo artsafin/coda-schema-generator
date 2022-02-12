@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	_ "github.com/artsafin/coda-go-client/codaapi"
 	"github.com/artsafin/coda-schema-generator/dto"
 	"github.com/artsafin/coda-schema-generator/generator"
 	"github.com/artsafin/coda-schema-generator/schema"

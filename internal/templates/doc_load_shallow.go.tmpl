@@ -24,13 +24,13 @@ func (d *CodaDocument) List{{ fieldName $table.Name }}(ctx context.Context, extr
     return
 }
 
-func (d *CodaDocument) MapOf{{ fieldName $table.Name }}(ctx context.Context, extraParams ...{{ $.APIPackageName }}.ListRowsParam) (m map[RowID]{{ fieldName $table.Name }}, maporder []RowID, err error) {
+func (d *CodaDocument) MapOf{{ fieldName $table.Name }}(ctx context.Context, extraParams ...{{ $.APIPackageName }}.ListRowsParam) (m map[RowID]*{{ fieldName $table.Name }}, maporder []RowID, err error) {
     rows, err := d.ListAllRows(ctx, ID.Table.{{ fieldName $table.Name }}.ID, extraParams...)
     if err != nil {
         return
     }
 
-    m = make(map[RowID]{{ fieldName $table.Name }}, len(rows))
+    m = make(map[RowID]*{{ fieldName $table.Name }}, len(rows))
     maporder = make([]RowID, 0, len(rows))
 
     for idx, row := range rows {
@@ -39,7 +39,7 @@ func (d *CodaDocument) MapOf{{ fieldName $table.Name }}(ctx context.Context, ext
             return nil, nil, fmt.Errorf("failed to create {{ fieldName $table.Name }} from row %d (%v): %w", idx, row.BrowserLink, err)
         }
         maporder = append(maporder, RowID(row.Id))
-        m[RowID(row.Id)] = item
+        m[RowID(row.Id)] = &item
     }
 
     return

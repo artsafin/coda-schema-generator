@@ -12,7 +12,7 @@ func (tc TableColumns) HasReferencedTables() bool {
 	}
 
 	for _, c := range tc.Items {
-		if c.IsMutableLookup() {
+		if c.IsLookup() {
 			return true
 		}
 	}
@@ -27,7 +27,7 @@ func (tc TableColumns) GetReferencedTables() []TableFormat {
 	fm := map[string]TableFormat{}
 
 	for _, c := range tc.Items {
-		if c.IsMutableLookup() {
+		if c.IsLookup() {
 			fm[c.Format.Table.Name] = c.Format.Table
 		}
 	}

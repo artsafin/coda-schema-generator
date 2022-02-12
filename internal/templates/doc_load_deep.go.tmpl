@@ -17,40 +17,54 @@ type Tables struct {
 {{- if $columns.HasReferencedTables }}
 
 // LoadRelations{{ fieldName $table.Name }} loads data into lookup fields of the {{ fieldName $table.Name }} struct
-func (doc *CodaDocument) LoadRelations{{ fieldName $table.Name }}(ctx context.Context, shallow map[RowID]{{ fieldName $table.Name }}, rels Tables) (err error) {
-	var ok bool
+func (doc *CodaDocument) LoadRelations{{ fieldName $table.Name }}(ctx context.Context, shallow map[RowID]*{{ fieldName $table.Name }}, rels Tables) (err error) {
+	var wg sync.WaitGroup
 
 	{{- range $columns.GetReferencedTables }}
 	{{- $colTypeName := typeName .Name "Map" }}
 	{{- $colFieldName := fieldName .Name }}
-	var {{ $colTypeName }} map[RowID]{{ $colFieldName }}
-	if {{ $colTypeName }}, ok = doc.relationsCache["{{ $colFieldName }}"].(map[RowID]{{ $colFieldName }}); rels.{{ $colFieldName }} && !ok {
-		{{ $colTypeName }}, _, err = doc.MapOf{{ $colFieldName }}(ctx)
-		if err != nil {
-			return err
+	var {{ $colTypeName }} map[RowID]*{{ $colFieldName }}
+	{{- end }}
+
+	{{- range $columns.GetReferencedTables }}
+	{{- $colMapType := typeName .Name "Map" }}
+	{{- $colInterType := typeName .Name "Inter" }}
+	{{- $colFieldName := fieldName .Name }}
+	func(){
+		if !rels.{{ $colFieldName }} {
+			return
 		}
-		doc.relationsCache["{{ $colFieldName }}"] = {{ $colTypeName }}
-	}
+
+		if {{ $colInterType }}, ok := doc.relationsCache.Load("{{ $colFieldName }}"); ok {
+			if {{ $colMapType }}, ok = {{ $colInterType }}.(map[RowID]*{{ $colFieldName }}); ok {
+				return
+			}
+		}
+
+		wg.Add(1)
+		go func(){
+			defer wg.Done()
+
+			{{ $colMapType }}, _, err = doc.MapOf{{ $colFieldName }}(ctx)
+			doc.relationsCache.Store("{{ $colFieldName }}", {{ $colMapType }})
+		}()
+	}()
 
 	{{- end }}
 
-	for ii, item := range shallow {
+	wg.Wait()
+
+	if err != nil {
+		return err
+	}
+
+	for ii, _ := range shallow {
 		{{- range $columns.GetReferencedTables }}
 		{{- $colTypeName := typeName .Name "Map" }}
 		{{- $colFieldName := fieldName .Name }}
 		if rels.{{ $colFieldName }} {
 			{{- range $columns.GetColumnsReferencedTo .Name }}
-			for vi, v := range item.{{ fieldName .Name }}.Values {
-				if v.Data != nil {
-					continue
-				}
-
-				data, ok := {{ $colTypeName }}[RowID(v.RowID)]
-
-				if ok {
-					shallow[ii].{{ fieldName .Name }}.Values[vi].Data = &data
-				}
-			}
+			shallow[ii].{{ fieldName .Name }}.Hydrate({{ $colTypeName }})
 			{{- end }}
 		}
 
