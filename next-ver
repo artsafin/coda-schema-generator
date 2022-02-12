@@ -20,5 +20,10 @@ fi
 sed "s/${OLDVER}/${NEWVER}/" < README.md > README.md.tmp
 mv README.md.tmp README.md
 
+git diff --color-words README.md
+
+git commit -m "Release version ${NEWVER}" README.md
+
 git tag "${NEWVER}"
 
+git push --tags
