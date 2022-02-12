@@ -48,6 +48,7 @@ if asksure; then
 
   git tag "${NEWVER}"
 
+  git push origin HEAD
   git push --tags
 else
   echo "Restoring README.md"
