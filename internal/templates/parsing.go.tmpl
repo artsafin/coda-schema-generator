@@ -15,6 +15,18 @@ func ToString(colID string, row Valuer) (string, error) {
 		return strings.Trim(value, "`"), nil
 	}
 
+	// If whole cell looks like an URL Coda may parse it so and return column value as a WebPage structure
+	webpage, err := ToWebPage(colID, row)
+	if err == nil {
+		return fmt.Sprintf("[%v](%v)", webpage.Url, webpage.Url), nil
+	}
+
+	// If whole cell looks like a money amount Coda may parse it so and return column value as a MonetaryAmount structure
+	money, err := ToMonetaryAmount(colID, row)
+	if err == nil {
+		return fmt.Sprintf("%.2f %v", money.Amount, money.Currency), nil
+	}
+
 	bs, _ := json.Marshal(rawv)
 
     return strings.Trim(string(bs), `"`), nil
@@ -156,6 +168,25 @@ func toStructuredValue(rawv interface{}) (sv structuredValue, err error) {
 	}
 
 	return
+}
+
+//ToWebPage parses Valuer value(s) of the following structure:
+//{
+//    "@context": "http://schema.org/",
+//    "@type": "WebPage",
+//    "url": "https://example.org"
+//}
+func ToWebPage(colID string, row Valuer) (p WebPage, err error) {
+	v, ok := row.GetValue(colID)
+	if !ok {
+		return WebPage{}, nil
+	}
+
+	if mapVal, ok := v.(map[string]interface{}); ok && mapVal["@type"] == "WebPage" {
+		return WebPage{Url: mapVal["url"].(string)}, nil
+	}
+
+	return WebPage{}, fmt.Errorf("unexpected value type %T (value %#v)", v, v)
 }
 
 //ToPersons parses Valuer value(s) of the following structure:
