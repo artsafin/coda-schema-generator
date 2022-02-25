@@ -18,7 +18,7 @@ func ToString(colID string, row Valuer) (string, error) {
 	// If whole cell looks like an URL Coda may parse it so and return column value as a WebPage structure
 	webpage, err := ToWebPage(colID, row)
 	if err == nil {
-		return fmt.Sprintf("[%v](%v)", webpage.Url, webpage.Url), nil
+		return webpage.Url, nil
 	}
 
 	// If whole cell looks like a money amount Coda may parse it so and return column value as a MonetaryAmount structure
